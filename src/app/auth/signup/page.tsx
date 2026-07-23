@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,12 +13,13 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
 
 const formSchema = z.object({
+  name: z.string().min(1, { message: "Name is required" }),
   email: z
     .string()
     .min(6, { message: "Email must be at least 6 characters" })
@@ -29,7 +31,8 @@ const formSchema = z.object({
 
 type FormType = z.infer<typeof formSchema>;
 
-export default function SignInPage() {
+export default function SignUpPage() {
+  const router = useRouter();
   const {
     register,
     control,
@@ -43,9 +46,10 @@ export default function SignInPage() {
 
   const onSubmit = async (data: FormType) => {
     try {
-      const { error } = await authClient.signIn.email({
+      const { error } = await authClient.signUp.email({
         email: data.email,
         password: data.password,
+        name: data.name,
       });
 
       if (error) {
@@ -58,7 +62,7 @@ export default function SignInPage() {
         return;
       }
 
-      redirect("/dashboard");
+      router.push("/dashboard");
     } catch (error: unknown) {
       setServerError(
         error instanceof Error
@@ -73,13 +77,26 @@ export default function SignInPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full md:max-w-md">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
+          <CardTitle>Sign Up</CardTitle>
           <CardDescription>
-            Enter your email and password to sign in.
+            Enter your name, email and password to sign up.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form className="grid gap-4" onSubmit={handleSubmit(onSubmit)}>
+            <Controller
+              control={control}
+              name="name"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Name</FieldLabel>
+                  <Input type="text" required id="name" {...field} />
+                  {fieldState.error && (
+                    <FieldError errors={[fieldState.error]} />
+                  )}
+                </Field>
+              )}
+            />
             <Controller
               control={control}
               name="email"
