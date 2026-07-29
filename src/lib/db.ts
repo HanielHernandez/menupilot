@@ -1,15 +1,26 @@
-import Mongoose from 'mongoose'
+import mongoose from "mongoose";
 
-export const MONGODB_URI = process.env.MONGODB_URI!;
+export const MONGODB_URI = process.env.MONGODB_URI;
 
-let cached = (global as any).mongoose;
-
-if (!cached) {
-  cached = (global as any).mongoose = {
-    conn: null,
-    promise: null,
-  };
+if (!MONGODB_URI) {
+  throw new Error("Please define the MONGODB_URI environment variable");
 }
+
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+declare global {
+  var mongooseCache: MongooseCache | undefined;
+}
+
+const cached = global.mongooseCache ?? {
+  conn: null,
+  promise: null,
+};
+
+global.mongooseCache = cached;
 
 export async function connectDB() {
   if (cached.conn) {
@@ -17,7 +28,9 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI);
+    cached.promise = mongoose.connect(MONGODB_URI || "", {
+      dbName: "menupilot",
+    });
   }
 
   cached.conn = await cached.promise;

@@ -1,0 +1,23 @@
+---
+description: Never remove or overwrite existing .env variables when adding new ones
+globs: .env*
+alwaysApply: true
+---
+
+# Environment files
+
+When editing `.env`, `.env.local`, `.env.example`, or any env file:
+
+- **Never overwrite the whole file** to add new variables
+- **Never delete or blank out** existing variables
+- **Only append or update** the specific keys you need to change
+- Before writing, read the current file and **merge** new keys into the existing contents
+- If a key already exists, update that line only; leave all other lines untouched
+
+```text
+# ❌ BAD — replaces the file and drops MONGODB_URI / other keys
+write entire .env with only the new R2_* vars
+
+# ✅ GOOD — read .env, keep every existing line, append or set only new keys
+R2_ENDPOINT=...
+```

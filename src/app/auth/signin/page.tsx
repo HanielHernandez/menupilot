@@ -4,6 +4,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -12,7 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { redirect } from "next/navigation";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -30,11 +32,11 @@ const formSchema = z.object({
 type FormType = z.infer<typeof formSchema>;
 
 export default function SignInPage() {
+  const router = useRouter();
   const {
-    register,
     control,
     handleSubmit,
-    formState: { errors, isSubmitting },
+    formState: { isSubmitting },
   } = useForm<FormType>({
     resolver: zodResolver(formSchema),
   });
@@ -58,7 +60,7 @@ export default function SignInPage() {
         return;
       }
 
-      redirect("/dashboard");
+      router.replace("/dashboard");
     } catch (error: unknown) {
       setServerError(
         error instanceof Error
@@ -119,6 +121,14 @@ export default function SignInPage() {
             </Button>
           </form>
         </CardContent>
+        <CardFooter>
+          <p className="text-sm text-muted-foreground text-center">
+            Dont have an account? click here to{" "}
+            <Link href="/auth/signup" className="font-bold text-blue-500">
+              Sign Up
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );

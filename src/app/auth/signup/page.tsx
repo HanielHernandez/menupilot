@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -13,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
@@ -62,7 +64,7 @@ export default function SignUpPage() {
         return;
       }
 
-      router.push("/dashboard");
+      router.replace("/dashboard");
     } catch (error: unknown) {
       setServerError(
         error instanceof Error
@@ -136,6 +138,14 @@ export default function SignUpPage() {
             </Button>
           </form>
         </CardContent>
+        <CardFooter>
+          <p className="text-sm text-muted-foreground text-center">
+            Already have an account? click here to{" "}
+            <Link href="/auth/signin" className="font-bold text-blue-500">
+              Sign in
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );
