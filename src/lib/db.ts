@@ -1,8 +1,7 @@
+import { config } from "@/lib/config";
 import mongoose from "mongoose";
 
-export const MONGODB_URI = process.env.MONGODB_URI;
-
-if (!MONGODB_URI) {
+if (!config.mongodb.uri) {
   throw new Error("Please define the MONGODB_URI environment variable");
 }
 
@@ -28,7 +27,7 @@ export async function connectDB() {
   }
 
   if (!cached.promise) {
-    cached.promise = mongoose.connect(MONGODB_URI || "", {
+    cached.promise = mongoose.connect(config.mongodb.uri, {
       dbName: "menupilot",
     });
   }

@@ -1,7 +1,7 @@
-import { S3Client } from "@aws-sdk/client-s3";
+import { config } from "@/lib/config";
+import { DeleteObjectCommand, S3Client } from "@aws-sdk/client-s3";
 
-function requireEnv(name: string) {
-  const value = process.env[name];
+function requireConfigValue(name: string, value: string) {
   if (!value) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
@@ -14,10 +14,16 @@ export function getS3Client() {
   if (!client) {
     client = new S3Client({
       region: "auto",
-      endpoint: requireEnv("R2_ENDPOINT"),
+      endpoint: requireConfigValue("R2_ENDPOINT", config.r2.endpoint),
       credentials: {
-        accessKeyId: requireEnv("R2_ACCESS_KEY_ID"),
-        secretAccessKey: requireEnv("R2_SECRET_ACCESS_KEY"),
+        accessKeyId: requireConfigValue(
+          "R2_ACCESS_KEY_ID",
+          config.r2.accessKeyId,
+        ),
+        secretAccessKey: requireConfigValue(
+          "R2_SECRET_ACCESS_KEY",
+          config.r2.secretAccessKey,
+        ),
       },
       forcePathStyle: true,
     });
@@ -26,6 +32,31 @@ export function getS3Client() {
   return client;
 }
 
-export const R2_BUCKET = process.env.R2_BUCKET ?? "";
-export const R2_PUBLIC_URL = process.env.R2_PUBLIC_URL ?? "";
-export const R2_TOKEN = process.env.R2_TOKEN ?? "";
+/** Permanent public object URL (no expiry). Prefers R2_PUBLIC_URL when set. */
+export function getPublicObjectUrl(key: string) {
+  const encodedKey = key
+    .split("/")
+    .map((segment) => encodeURIComponent(segment))
+    .join("/");
+
+  const publicBase = config.r2.publicUrl.replace(/\/$/, "");
+  if (publicBase) {
+    return `${publicBase}/${encodedKey}`;
+  }
+
+  const endpoint = config.r2.endpoint.replace(/\/$/, "");
+  const bucket = config.r2.bucket;
+  return `${endpoint}/${bucket}/${encodedKey}`;
+}
+
+export async function deleteObjectFromR2(key: string) {
+  if (!key) return;
+
+  const s3 = getS3Client();
+  await s3.send(
+    new DeleteObjectCommand({
+      Bucket: config.r2.bucket,
+      Key: key,
+    }),
+  );
+}

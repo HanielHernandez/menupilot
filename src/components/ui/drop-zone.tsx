@@ -26,7 +26,8 @@ const DEFAULT_ACCEPT = [
   "application/pdf",
 ] as const;
 
-const DEFAULT_ACCEPT_ATTR = "image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf";
+const DEFAULT_ACCEPT_ATTR =
+  "image/jpeg,image/png,image/webp,image/gif,application/pdf,.pdf";
 
 export type DropZoneFile = {
   id: string;
@@ -187,7 +188,7 @@ export function DropZone({
   };
 
   return (
-    <div className={cn("flex w-full flex-col gap-3", className)}>
+    <div className={cn("flex w-full flex-col gap-3 bg-white", className)}>
       <div
         role="button"
         tabIndex={disabled ? -1 : 0}
@@ -278,7 +279,9 @@ export function DropZone({
                 </div>
 
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">{item.file.name}</p>
+                  <p className="truncate text-sm font-medium">
+                    {item.file.name}
+                  </p>
                   <p className="text-muted-foreground flex items-center gap-1 text-xs">
                     {isImage ? (
                       <ImageIcon className="size-3" />
