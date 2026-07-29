@@ -2,12 +2,39 @@
 
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import {
+  createEmptyExtractedMenu,
+  mergeExtractedMenus,
+  parseExtractedMenu,
+  type ExtractedMenu,
+} from "@/lib/menu-extract";
+import { extractMenuFromImage } from "@/lib/openai";
 import { MenuImageModel } from "@/models/menu-image.model";
 import { RestaurantModel } from "@/models/restaurant.model";
+import mongoose from "mongoose";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
-export async function processMenuImagesAction() {
+export type ProcessMenuImagesResult =
+  | {
+      success: true;
+      processedCount: number;
+      menu: ExtractedMenu;
+      errors: string[];
+    }
+  | {
+      success: false;
+      error: string;
+    };
+
+type ProcessMenuImagesInput = {
+  restaurantId?: string;
+  imageIds?: string[];
+};
+
+export async function processMenuImagesAction(
+  input: ProcessMenuImagesInput = {},
+): Promise<ProcessMenuImagesResult> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -21,10 +48,18 @@ export async function processMenuImagesAction() {
 
   await connectDB();
 
-  const restaurant = await RestaurantModel.findOne({
-    ownerId: session.user.id,
-    deletedAt: null,
-  });
+  const restaurantQuery = input.restaurantId
+    ? {
+        _id: input.restaurantId,
+        ownerId: session.user.id,
+        deletedAt: null,
+      }
+    : {
+        ownerId: session.user.id,
+        deletedAt: null,
+      };
+
+  const restaurant = await RestaurantModel.findOne(restaurantQuery);
 
   if (!restaurant) {
     return {
@@ -33,21 +68,66 @@ export async function processMenuImagesAction() {
     };
   }
 
-  const result = await MenuImageModel.updateMany(
-    {
-      restaurantId: restaurant._id,
-      status: "uploaded",
-      deletedAt: null,
-    },
-    {
-      $set: { status: "processing" },
-    },
-  );
+  const imageObjectIds = (input.imageIds ?? [])
+    .filter((id) => mongoose.isValidObjectId(id))
+    .map((id) => new mongoose.Types.ObjectId(id));
 
-  revalidatePath("/dashboard/menu");
+  const images = await MenuImageModel.find({
+    restaurantId: restaurant._id,
+    ...(imageObjectIds.length
+      ? { _id: { $in: imageObjectIds } }
+      : { status: "uploaded" }),
+    $or: [{ deletedAt: null }, { deletedAt: { $exists: false } }],
+  });
+
+  const uploadedImages = images.filter((image) => image.status === "uploaded");
+
+  if (!uploadedImages.length) {
+    return {
+      success: false,
+      error: "No uploaded images to process",
+    };
+  }
+
+  let menu = createEmptyExtractedMenu();
+  const errors: string[] = [];
+  let processedCount = 0;
+
+  for (const image of uploadedImages) {
+    await MenuImageModel.findByIdAndUpdate(image._id, {
+      status: "processing",
+    });
+    revalidatePath("/dashboard/menu");
+
+    try {
+      const raw = await extractMenuFromImage(image.url);
+      const extracted = parseExtractedMenu(raw);
+      menu = mergeExtractedMenus(menu, extracted);
+
+      await MenuImageModel.findByIdAndUpdate(image._id, {
+        status: "extracted",
+      });
+      processedCount += 1;
+    } catch (error) {
+      console.error("Failed to extract menu from image", image._id, error);
+      errors.push(
+        `Failed to process ${image.key || image.url}: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`,
+      );
+
+      await MenuImageModel.findByIdAndUpdate(image._id, {
+        status: "uploaded",
+      });
+    }
+
+    revalidatePath("/dashboard/menu");
+  }
 
   return {
     success: true,
-    processedCount: result.modifiedCount,
+    processedCount,
+    menu,
+    errors,
   };
 }

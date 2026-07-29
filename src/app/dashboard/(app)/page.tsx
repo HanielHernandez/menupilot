@@ -1,9 +1,12 @@
+import MenuItemsWidget from "@/components/MenuItemsWidget";
 import ResturantDetails from "@/components/ResturantDetails";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { CategoryModel } from "@/models/category.model";
+import { MenuItemModel } from "@/models/menu-item.model";
 import {
   RestaurantModel as Restaurant,
-  Restaurant as RestaurantI,
+  type Restaurant as RestaurantI,
 } from "@/models/restaurant.model";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -28,10 +31,40 @@ export default async function DashboardPage() {
     redirect("/dashboard/onboarding");
   }
 
+  const [menuItems, categories] = await Promise.all([
+    MenuItemModel.find({
+      restaurantId: restaurant._id,
+      deletedAt: null,
+    })
+      .sort({ createdAt: -1 })
+      .limit(5)
+      .lean(),
+    CategoryModel.find({
+      restaurantId: restaurant._id,
+      deletedAt: null,
+    }).lean(),
+  ]);
+
+  const categoryNameById = new Map(
+    categories.map((category) => [
+      category._id.toString(),
+      category.name,
+    ]),
+  );
+
+  const widgetItems = menuItems.map((item) => ({
+    id: item._id.toString(),
+    name: item.name,
+    description: item.description ?? "",
+    price: item.price,
+    categoryName:
+      categoryNameById.get(item.categoryId.toString()) ?? "Uncategorized",
+  }));
+
   return (
-    <div className="flex flex-col gap-8 mx-auto w-full max-w-7xl">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-8">
       <div className="flex flex-col gap-2">
-        <p className="text-5xl font-bold tracking-tight text-foreground">
+        <p className="text-foreground text-5xl font-bold tracking-tight">
           Hi {session?.user.name}
         </p>
         <p className="text-muted-foreground text-base">
@@ -43,6 +76,10 @@ export default async function DashboardPage() {
         <ResturantDetails
           restaurant={restaurant}
           className="w-full md:w-1/2 lg:w-1/3"
+        />
+        <MenuItemsWidget
+          items={widgetItems}
+          className="w-full md:w-1/2 lg:flex-1"
         />
       </div>
     </div>

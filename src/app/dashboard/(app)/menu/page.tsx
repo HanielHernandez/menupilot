@@ -1,8 +1,7 @@
-import ImageUploader from "@/components/ImageUploader";
-import MenuImagesList from "@/components/MenuImagesList";
-import ProcessImagesButton from "@/components/ProcessImagesButton";
+import MenuWorkspace from "@/components/MenuWorkspace";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { flattenMenuItems, type ExtractedCategory } from "@/lib/menu-extract";
 import { CategoryModel } from "@/models/category.model";
 import { MenuImageModel } from "@/models/menu-image.model";
 import { MenuItemModel } from "@/models/menu-item.model";
@@ -29,71 +28,75 @@ export default async function MenuPage() {
     return null;
   }
 
-  const [menuItems, menuImages, categories] = await Promise.all([
-    MenuItemModel.find({
-      restaurantId: restaurant._id,
-      deletedAt: null,
-    })
-      .lean()
-      .then((items) => items ?? []),
+  const [menuImages, categories, menuItems] = await Promise.all([
     MenuImageModel.find({
       restaurantId: restaurant._id,
       deletedAt: null,
-    })
-      .lean()
-      .then((items) => items ?? []),
+    }).lean(),
     CategoryModel.find({
       restaurantId: restaurant._id,
       deletedAt: null,
     })
-      .lean()
-      .then((items) => items ?? []),
+      .sort({ sort: 1, name: 1 })
+      .lean(),
+    MenuItemModel.find({
+      restaurantId: restaurant._id,
+      deletedAt: null,
+    })
+      .sort({ name: 1 })
+      .lean(),
   ]);
 
+  const initialCategories: ExtractedCategory[] = categories.map(
+    (category, index) => ({
+      id: category._id.toString(),
+      name: category.name,
+      description: category.description ?? "",
+      sort: category.sort ?? index,
+      items: menuItems
+        .filter(
+          (item) => item.categoryId.toString() === category._id.toString(),
+        )
+        .map((item) => ({
+          id: item._id.toString(),
+          name: item.name,
+          description: item.description ?? "",
+          price: item.price,
+        })),
+    }),
+  );
+
+  const initialMenuItems = flattenMenuItems({ categories: initialCategories });
+  const menuVersion = [
+    restaurant._id.toString(),
+    categories.length,
+    menuItems.length,
+    categories.map((category) => category.updatedAt?.toString?.() ?? "").join("-"),
+    menuItems.map((item) => item.updatedAt?.toString?.() ?? "").join("-"),
+  ].join(":");
+
   return (
-    <div className="flex w-full max-w-7xl flex-col gap-6 mx-auto">
+    <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold">Menu</h2>
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-sm">
           Manage menu uploads, extracted content, and image files for{" "}
           {restaurant.name}
         </p>
       </div>
 
-      <div className="flex flex-col gap-6 lg:flex-row">
-        <div className="flex w-1/3 flex-col gap-2">
-          <h3 className="text-lg font-bold">Source documents</h3>
-          <p className="text-sm text-muted-foreground">
-            Upload your menu files for AI Extraction
-          </p>
-          <ImageUploader />
-
-          <div className="mt-4 rounded-lg border bg-card p-4">
-            <div className="mb-3 flex items-center justify-between gap-2">
-              <div>
-                <h4 className="font-semibold">Uploaded menu images</h4>
-                <p className="text-sm text-muted-foreground">
-                  {menuImages.length} image{menuImages.length === 1 ? "" : "s"}{" "}
-                  available
-                </p>
-              </div>
-              <ProcessImagesButton
-                disabled={
-                  !menuImages.some((image) => image.status === "uploaded")
-                }
-              />
-            </div>
-            <MenuImagesList
-              items={menuImages.map((item) => ({
-                _id: item._id.toString(),
-                url: item.url,
-                status: item.status,
-                fileName: item.key?.split("/").pop() ?? item.url.split("/").pop(),
-              }))}
-            />
-          </div>
-        </div>
-      </div>
+      <MenuWorkspace
+        key={menuVersion}
+        restaurantId={restaurant._id.toString()}
+        menuImages={menuImages.map((item) => ({
+          _id: item._id.toString(),
+          url: item.url,
+          status: item.status,
+          fileName: item.key?.split("/").pop() ?? item.url.split("/").pop(),
+        }))}
+        initialCategories={initialCategories}
+        initialMenuItems={initialMenuItems}
+      />
     </div>
   );
 }

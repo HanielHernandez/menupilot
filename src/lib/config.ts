@@ -1,5 +1,5 @@
 function env(name: string, fallback = ""): string {
-  return process.env[name] ?? fallback;
+  return (process.env[name] ?? fallback).trim();
 }
 
 export const config = {

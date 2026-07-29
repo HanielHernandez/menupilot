@@ -1,37 +1,65 @@
 "use client";
 
 import { processMenuImagesAction } from "@/app/actions/processMenuImages";
+import { useMenuExtract } from "@/components/MenuExtractProvider";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import { RecycleIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { toast } from "sonner";
 
 type ProcessImagesButtonProps = {
   disabled?: boolean;
+  restaurantId: string;
+  imageIds: string[];
 };
 
 export default function ProcessImagesButton({
   disabled = false,
+  restaurantId,
+  imageIds,
 }: ProcessImagesButtonProps) {
   const router = useRouter();
+  const { setExtractedMenu } = useMenuExtract();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleClick = async () => {
-    if (isProcessing || disabled) return;
+    if (isProcessing || disabled || !imageIds.length) return;
 
     setIsProcessing(true);
     try {
-      const result = await processMenuImagesAction();
+      const result = await processMenuImagesAction({
+        restaurantId,
+        imageIds,
+      });
 
       if (!result.success) {
-        alert(result.error || "Failed to process images");
+        toast.error(result.error || "Failed to process images");
         return;
       }
 
+      setExtractedMenu(result.menu);
+
       if (!result.processedCount) {
-        alert("No uploaded images to process");
+        toast.error(
+          result.errors[0] ||
+            "Images were found, but extraction did not complete successfully.",
+        );
+        router.refresh();
         return;
+      }
+
+      if (result.errors.length) {
+        toast.warning(
+          `Processed ${result.processedCount} image(s), with ${result.errors.length} error(s).`,
+        );
+      } else {
+        toast.success(
+          `Processed ${result.processedCount} image${
+            result.processedCount === 1 ? "" : "s"
+          } successfully.`,
+        );
       }
 
       router.refresh();
@@ -45,7 +73,7 @@ export default function ProcessImagesButton({
       type="button"
       variant="outline"
       size="sm"
-      disabled={disabled || isProcessing}
+      disabled={disabled || isProcessing || !imageIds.length}
       onClick={handleClick}
     >
       {isProcessing ? (

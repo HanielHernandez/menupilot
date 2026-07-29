@@ -6,6 +6,7 @@ import { DropZone, type DropZoneFile } from "@/components/ui/drop-zone";
 import { Spinner } from "@/components/ui/spinner";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
+import { toast } from "sonner";
 
 type ImageUploaderProps = {
   submitLabel?: string;
@@ -42,12 +43,13 @@ export default function ImageUploader({
       const res = await uploadMenuFile(formData);
 
       if (!res.success) {
-        alert(res.error || "Failed to upload files");
+        toast.error(res.error || "Failed to upload files");
         return;
       }
 
       clearFiles();
       router.refresh();
+      toast.success("Files uploaded successfully");
     } finally {
       setIsSubmitting(false);
     }

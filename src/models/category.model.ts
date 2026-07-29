@@ -13,6 +13,12 @@ const CategorySchema = new Schema(
       default: "",
     },
 
+    sort: {
+      type: Number,
+      default: 0,
+      index: true,
+    },
+
     restaurantId: {
       type: Schema.Types.ObjectId,
       ref: "Restaurant",

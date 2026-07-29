@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { CheckIcon, CloudIcon, RecycleIcon } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
+import { toast } from "sonner";
 
 export type MenuImageListItem = {
   _id: string;
@@ -71,8 +72,9 @@ export default function MenuImagesList({ items }: MenuImagesListProps) {
 
       if (result.success) {
         setRemovedIds((current) => new Set(current).add(imageId));
+        toast.success("Image deleted");
       } else {
-        alert(result.error || "Failed to delete image");
+        toast.error(result.error || "Failed to delete image");
       }
     } finally {
       setDeletingId(null);
