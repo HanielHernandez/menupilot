@@ -3,6 +3,7 @@ import ResturantDetails from "@/components/ResturantDetails";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { CategoryModel } from "@/models/category.model";
+import { MediaModel } from "@/models/media.model";
 import { MenuItemModel } from "@/models/menu-item.model";
 import {
   RestaurantModel as Restaurant,
@@ -24,13 +25,13 @@ export default async function DashboardPage() {
   const restaurant = await Restaurant.findOne({
     ownerId: session.user.id,
     deletedAt: null,
-  });
+  }).lean();
 
   if (!restaurant) {
     redirect("/dashboard/onboarding");
   }
 
-  const [menuItems, categories] = await Promise.all([
+  const [menuItems, categories, logoMedia] = await Promise.all([
     MenuItemModel.find({
       restaurantId: restaurant._id,
       deletedAt: null,
@@ -42,6 +43,12 @@ export default async function DashboardPage() {
       restaurantId: restaurant._id,
       deletedAt: null,
     }).lean(),
+    restaurant.logoMediaId
+      ? MediaModel.findOne({
+          _id: restaurant.logoMediaId,
+          deletedAt: null,
+        }).lean()
+      : Promise.resolve(null),
   ]);
 
   const categoryNameById = new Map(
@@ -70,7 +77,10 @@ export default async function DashboardPage() {
 
       <div className="flex flex-col gap-4 md:flex-row h-full lg:max-h-96 justify-center items-start ">
         <ResturantDetails
-          restaurant={restaurant}
+          restaurant={{
+            ...restaurant,
+            logoUrl: logoMedia?.url ?? "",
+          }}
           className="w-full h-full md:w-1/2 lg:w-1/3"
         />
         <MenuItemsWidget

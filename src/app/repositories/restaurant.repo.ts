@@ -8,7 +8,7 @@ export type CreateRestaurantInput = {
   name: string;
   slug: string;
   description?: string;
-  logoImage?: string;
+  logoMediaId?: string | null;
   address?: string;
   phoneNumber?: string;
   whatsappNumber?: string;
@@ -39,7 +39,7 @@ export async function createRestaurant(input: CreateRestaurantInput) {
     name: input.name,
     slug: input.slug,
     description: input.description ?? "",
-    logoImage: input.logoImage ?? "",
+    logoMediaId: input.logoMediaId || null,
     address: input.address ?? "",
     phoneNumber: input.phoneNumber ?? "",
     whatsappNumber: input.whatsappNumber ?? "",
@@ -60,7 +60,7 @@ export async function createRestaurant(input: CreateRestaurantInput) {
 export type UpdateRestaurantInput = {
   name: string;
   description?: string;
-  logoImage?: string;
+  logoMediaId?: string | null;
   address?: string;
   phoneNumber?: string;
   whatsappNumber?: string;
@@ -86,7 +86,7 @@ export async function updateRestaurantByOwnerId(
       $set: {
         name: input.name.trim(),
         description: input.description?.trim() ?? "",
-        logoImage: input.logoImage?.trim() ?? "",
+        logoMediaId: input.logoMediaId?.trim() || null,
         address: input.address?.trim() ?? "",
         phoneNumber: input.phoneNumber?.trim() ?? "",
         whatsappNumber: input.whatsappNumber?.trim() ?? "",

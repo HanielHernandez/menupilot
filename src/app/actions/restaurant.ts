@@ -19,10 +19,18 @@ const optionalUrl = z
     message: "Enter a valid URL",
   });
 
+const optionalMediaId = z
+  .string()
+  .trim()
+  .optional()
+  .refine((value) => !value || /^[a-f\d]{24}$/i.test(value), {
+    message: "Enter a valid media id",
+  });
+
 const restaurantFormSchema = z.object({
   name: z.string().trim().min(1, { message: "Name is required" }),
   description: z.string().trim().optional(),
-  logoImage: optionalUrl,
+  logoMediaId: optionalMediaId,
   address: z.string().trim().optional(),
   phoneNumber: z.string().trim().optional(),
   whatsappNumber: z.string().trim().optional(),

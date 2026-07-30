@@ -11,7 +11,7 @@ import { Restaurant } from "@/models/restaurant.model";
 import { Edit } from "lucide-react";
 
 interface ResturantDetailsProps {
-  restaurant: Restaurant;
+  restaurant: Restaurant & { logoUrl?: string };
   className?: string;
 }
 
@@ -19,7 +19,7 @@ export default function ResturantDetails({
   restaurant,
   className,
 }: ResturantDetailsProps) {
-  const logo = restaurant.logoImage?.trim();
+  const logo = restaurant.logoUrl?.trim();
   const avatarUrl =
     logo ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(restaurant.name)}&size=128&background=random`;

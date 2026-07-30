@@ -18,7 +18,7 @@ export default function NavbarBlockView({
   backgroundColor,
 }: NavbarBlockProps) {
   const logo =
-    restaurant.logoImage?.trim() ||
+    restaurant.logoUrl?.trim() ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(restaurant.name)}&size=64&background=random`;
   const socials = getRestaurantSocialLinks(restaurant);
 

@@ -4,12 +4,13 @@ import { auth } from "@/lib/auth";
 import { config } from "@/lib/config";
 import { connectDB } from "@/lib/db";
 import { getPublicObjectUrl, getS3Client } from "@/lib/s3";
+import { MediaModel } from "@/models/media.model";
 import { RestaurantModel } from "@/models/restaurant.model";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { headers } from "next/headers";
 
 export type UploadRestaurantLogoResult =
-  | { success: true; url: string }
+  | { success: true; mediaId: string; url: string }
   | { success: false; error: string };
 
 export async function uploadRestaurantLogoAction(
@@ -56,8 +57,18 @@ export async function uploadRestaurantLogoAction(
     }),
   );
 
+  const url = getPublicObjectUrl(key);
+  const media = await MediaModel.create({
+    restaurantId: restaurant._id,
+    userId: session.user.id,
+    weight: 0,
+    url,
+    key,
+  });
+
   return {
     success: true,
-    url: getPublicObjectUrl(key),
+    mediaId: media._id.toString(),
+    url,
   };
 }

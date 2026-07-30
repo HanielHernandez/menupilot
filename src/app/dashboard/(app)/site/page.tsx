@@ -2,6 +2,7 @@ import { getOrCreateSiteForRestaurant } from "@/app/repositories/site.repo";
 import SiteBuilder from "@/components/SiteBuilder";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { MediaModel } from "@/models/media.model";
 import { RestaurantModel } from "@/models/restaurant.model";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -27,6 +28,13 @@ export default async function SitePage() {
   }
 
   const site = await getOrCreateSiteForRestaurant(restaurant._id.toString());
+  const logoMediaId = restaurant.logoMediaId?.toString() ?? null;
+  const logoMedia = logoMediaId
+    ? await MediaModel.findOne({
+        _id: logoMediaId,
+        deletedAt: null,
+      }).lean()
+    : null;
 
   return (
     <div className="mx-auto flex w-full flex-col gap-6">
@@ -43,7 +51,8 @@ export default async function SitePage() {
           name: restaurant.name,
           slug: restaurant.slug,
           description: restaurant.description ?? "",
-          logoImage: restaurant.logoImage ?? "",
+          logoMediaId,
+          logoUrl: logoMedia?.url ?? "",
           address: restaurant.address ?? "",
           phoneNumber: restaurant.phoneNumber ?? "",
           whatsappNumber: restaurant.whatsappNumber ?? "",

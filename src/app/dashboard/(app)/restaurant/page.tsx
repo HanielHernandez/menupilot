@@ -1,6 +1,7 @@
 import RestaurantEditForm from "@/components/RestaurantEditForm";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { MediaModel } from "@/models/media.model";
 import { RestaurantModel } from "@/models/restaurant.model";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -25,6 +26,14 @@ export default async function RestaurantPage() {
     redirect("/dashboard/onboarding");
   }
 
+  const logoMediaId = restaurant.logoMediaId?.toString() ?? "";
+  const logoMedia = logoMediaId
+    ? await MediaModel.findOne({
+        _id: logoMediaId,
+        deletedAt: null,
+      }).lean()
+    : null;
+
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div className="flex flex-col gap-1">
@@ -38,7 +47,8 @@ export default async function RestaurantPage() {
         initialValues={{
           name: restaurant.name,
           description: restaurant.description ?? "",
-          logoImage: restaurant.logoImage ?? "",
+          logoMediaId,
+          logoUrl: logoMedia?.url ?? "",
           address: restaurant.address ?? "",
           phoneNumber: restaurant.phoneNumber ?? "",
           whatsappNumber: restaurant.whatsappNumber ?? "",

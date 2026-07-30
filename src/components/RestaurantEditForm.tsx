@@ -1,8 +1,7 @@
 "use client";
 
 import { updateRestaurantAction } from "@/app/actions/restaurant";
-import { uploadRestaurantLogoAction } from "@/app/actions/uploadRestaurantLogo";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { ReplaceableImage } from "@/components/ReplaceableImage";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -12,7 +11,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { DropZone, type DropZoneFile } from "@/components/ui/drop-zone";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -36,10 +34,18 @@ const optionalUrl = z
     message: "Enter a valid URL",
   });
 
+const optionalMediaId = z
+  .string()
+  .trim()
+  .optional()
+  .refine((value) => !value || /^[a-f\d]{24}$/i.test(value), {
+    message: "Enter a valid media id",
+  });
+
 const restaurantSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
   description: z.string().optional(),
-  logoImage: optionalUrl,
+  logoMediaId: optionalMediaId,
   address: z.string().optional(),
   phoneNumber: z.string().optional(),
   whatsappNumber: z.string().optional(),
@@ -58,7 +64,8 @@ type RestaurantFormSchema = z.infer<typeof restaurantSchema>;
 export type RestaurantEditFormValues = {
   name: string;
   description: string;
-  logoImage: string;
+  logoMediaId: string;
+  logoUrl?: string;
   address: string;
   phoneNumber: string;
   whatsappNumber: string;
@@ -139,6 +146,7 @@ export default function RestaurantEditForm({
         initialValues.phoneNumber === initialValues.whatsappNumber,
     ),
   );
+  const [logoUrl, setLogoUrl] = useState(initialValues.logoUrl ?? "");
 
   const {
     control,
@@ -151,50 +159,12 @@ export default function RestaurantEditForm({
   });
 
   const phoneNumber = useWatch({ control, name: "phoneNumber" });
-  const logoImage = useWatch({ control, name: "logoImage" });
+  const logoMediaId = useWatch({ control, name: "logoMediaId" });
   const restaurantName = useWatch({ control, name: "name" }) ?? "Restaurant";
 
-  const [logoFiles, setLogoFiles] = useState<DropZoneFile[]>([]);
-  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
-
   const logoPreview =
-    logoImage?.trim() ||
+    logoUrl.trim() ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(restaurantName)}&size=256&background=random`;
-
-  const initials = restaurantName
-    .split(" ")
-    .map((part) => part[0])
-    .join("")
-    .slice(0, 2)
-    .toUpperCase();
-
-  const clearLogoFiles = () => {
-    logoFiles.forEach((item) => {
-      if (item.previewUrl) URL.revokeObjectURL(item.previewUrl);
-    });
-    setLogoFiles([]);
-  };
-
-  const handleLogoUpload = async () => {
-    const file = logoFiles[0];
-    if (!file || isUploadingLogo) return;
-
-    setIsUploadingLogo(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", file.file);
-      const result = await uploadRestaurantLogoAction(formData);
-      if (!result.success) {
-        toast.error(result.error || "Failed to upload logo");
-        return;
-      }
-      setValue("logoImage", result.url, { shouldDirty: true });
-      clearLogoFiles();
-      toast.success("Logo uploaded");
-    } finally {
-      setIsUploadingLogo(false);
-    }
-  };
 
   const onSubmit = handleSubmit(async (values) => {
     const result = await updateRestaurantAction({
@@ -224,49 +194,21 @@ export default function RestaurantEditForm({
         <CardContent className="flex flex-col gap-6">
           <FormSection
             title="Logo"
-            description="Upload a square logo. It appears on your dashboard and public site."
+            description="Click the logo to upload or pick an image. It appears on your dashboard and public site."
           >
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="size-32 rounded-full">
-                <AvatarImage src={logoPreview} alt={restaurantName} />
-                <AvatarFallback className="text-2xl">{initials}</AvatarFallback>
-              </Avatar>
-
-              <div className="flex w-full max-w-md flex-col gap-3">
-                <DropZone
-                  files={logoFiles}
-                  onFilesChange={setLogoFiles}
-                  multiple={false}
-                  maxFiles={1}
-                  accept={[
-                    "image/jpeg",
-                    "image/png",
-                    "image/webp",
-                    "image/gif",
-                  ]}
-                  acceptAttr="image/jpeg,image/png,image/webp,image/gif"
-                  disabled={isUploadingLogo || isSubmitting}
-                  label={isUploadingLogo ? "Uploading…" : "Drop logo image"}
-                  description="JPEG, PNG, WebP, or GIF"
-                />
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={
-                    isUploadingLogo || isSubmitting || logoFiles.length === 0
-                  }
-                  onClick={() => void handleLogoUpload()}
-                >
-                  {isUploadingLogo ? (
-                    <>
-                      <Spinner />
-                      Uploading…
-                    </>
-                  ) : (
-                    "Upload logo"
-                  )}
-                </Button>
-              </div>
+            <div className="flex justify-center">
+              <ReplaceableImage
+                src={logoPreview}
+                alt={restaurantName}
+                mediaId={logoMediaId || null}
+                disabled={isSubmitting}
+                modalTitle="Select logo"
+                modalDescription="Upload a square logo or choose one from your media library."
+                onReplace={(media) => {
+                  setValue("logoMediaId", media.id, { shouldDirty: true });
+                  setLogoUrl(media.url);
+                }}
+              />
             </div>
           </FormSection>
 
@@ -408,7 +350,7 @@ export default function RestaurantEditForm({
         </CardContent>
 
         <CardFooter className="justify-end border-t">
-          <Button type="submit" disabled={isSubmitting || isUploadingLogo}>
+          <Button type="submit" disabled={isSubmitting}>
             {isSubmitting ? (
               <>
                 <Spinner />
