@@ -46,10 +46,7 @@ export default async function DashboardPage() {
   ]);
 
   const categoryNameById = new Map(
-    categories.map((category) => [
-      category._id.toString(),
-      category.name,
-    ]),
+    categories.map((category) => [category._id.toString(), category.name]),
   );
 
   const widgetItems = menuItems.map((item) => ({
@@ -72,15 +69,20 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row md:flex-wrap">
+      <div className="flex flex-col gap-4 md:flex-row h-full max-h-96 justify-center items-start align-baseline md:flex-wrap">
         <ResturantDetails
           restaurant={restaurant}
-          className="w-full md:w-1/2 lg:w-1/3"
+          className="w-full h-full md:w-1/2 lg:w-1/3"
         />
         <MenuItemsWidget
           items={widgetItems}
           className="w-full md:w-1/2 lg:flex-1"
         />
+      </div>
+      <div>
+        <h2 className="text-foreground text-2xl font-bold tracking-tight">
+          Your Restaurant
+        </h2>
       </div>
     </div>
   );

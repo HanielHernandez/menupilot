@@ -13,21 +13,28 @@ type ProcessImagesButtonProps = {
   disabled?: boolean;
   restaurantId: string;
   imageIds: string[];
+  onProcessingChange?: (isProcessing: boolean) => void;
 };
 
 export default function ProcessImagesButton({
   disabled = false,
   restaurantId,
   imageIds,
+  onProcessingChange,
 }: ProcessImagesButtonProps) {
   const router = useRouter();
   const { setExtractedMenu } = useMenuExtract();
   const [isProcessing, setIsProcessing] = useState(false);
 
+  const setProcessing = (value: boolean) => {
+    setIsProcessing(value);
+    onProcessingChange?.(value);
+  };
+
   const handleClick = async () => {
     if (isProcessing || disabled || !imageIds.length) return;
 
-    setIsProcessing(true);
+    setProcessing(true);
     try {
       const result = await processMenuImagesAction({
         restaurantId,
@@ -64,7 +71,7 @@ export default function ProcessImagesButton({
 
       router.refresh();
     } finally {
-      setIsProcessing(false);
+      setProcessing(false);
     }
   };
 

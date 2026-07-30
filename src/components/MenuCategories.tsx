@@ -1,5 +1,6 @@
 "use client";
 
+import { deleteCategoryAction } from "@/app/actions/deleteCategory";
 import { saveMenuExtractAction } from "@/app/actions/saveMenuExtract";
 import { useMenuExtract } from "@/components/MenuExtractProvider";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import {
   ChevronUpIcon,
   PencilIcon,
   SaveIcon,
+  Trash2Icon,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -53,8 +55,12 @@ export default function MenuCategories({ restaurantId }: MenuCategoriesProps) {
     updateCategory,
     updateMenuItem,
     moveCategory,
+    deleteCategory,
   } = useMenuExtract();
   const [isSaving, setIsSaving] = useState(false);
+  const [deletingCategoryName, setDeletingCategoryName] = useState<
+    string | null
+  >(null);
   const [categoryEdit, setCategoryEdit] = useState<CategoryEditState | null>(
     null,
   );
@@ -123,6 +129,34 @@ export default function MenuCategories({ restaurantId }: MenuCategoriesProps) {
       price: Number(itemEdit.price) || 0,
     });
     setItemEdit(null);
+  };
+
+  const handleDeleteCategory = async (category: ExtractedCategory) => {
+    if (deletingCategoryName) return;
+
+    const confirmed = window.confirm(
+      `Delete category "${category.name}" and its items?`,
+    );
+    if (!confirmed) return;
+
+    setDeletingCategoryName(category.name);
+    try {
+      if (category.id) {
+        const result = await deleteCategoryAction(category.id, restaurantId);
+        if (!result.success) {
+          toast.error(result.error || "Failed to delete category");
+          return;
+        }
+      }
+
+      deleteCategory(category.name);
+      toast.success(`Deleted "${category.name}"`);
+      if (category.id) {
+        router.refresh();
+      }
+    } finally {
+      setDeletingCategoryName(null);
+    }
   };
 
   return (
@@ -207,6 +241,16 @@ export default function MenuCategories({ restaurantId }: MenuCategoriesProps) {
                       onClick={() => openCategoryEdit(category)}
                     >
                       <PencilIcon className="size-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon-sm"
+                      aria-label={`Delete category ${category.name}`}
+                      disabled={deletingCategoryName === category.name}
+                      onClick={() => handleDeleteCategory(category)}
+                    >
+                      <Trash2Icon className="size-4" />
                     </Button>
                   </div>
                 </div>

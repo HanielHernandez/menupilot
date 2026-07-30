@@ -34,6 +34,7 @@ type MenuExtractContextValue = {
     next: ExtractedMenuItem,
   ) => void;
   moveCategory: (categoryName: string, direction: "up" | "down") => void;
+  deleteCategory: (categoryName: string) => void;
 };
 
 const MenuExtractContext = createContext<MenuExtractContextValue | null>(null);
@@ -111,6 +112,11 @@ export function MenuExtractProvider({
       },
       moveCategory: (categoryName, direction) => {
         syncMenu(moveCategoryOrder(categories, categoryName, direction));
+      },
+      deleteCategory: (categoryName) => {
+        syncMenu(
+          categories.filter((category) => category.name !== categoryName),
+        );
       },
     }),
     [categories, menuItems],
