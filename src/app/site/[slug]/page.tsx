@@ -1,3 +1,4 @@
+import { findMenuForRestaurant } from "@/app/repositories/menu.repo";
 import { findRestaurantBySlug } from "@/app/repositories/restaurant.repo";
 import {
   findPublishedSiteByRestaurantId,
@@ -57,12 +58,16 @@ async function getPublicSiteData(slug: string) {
   };
 
   const template = toSiteTemplate(site);
+  const menuCategories = await findMenuForRestaurant(
+    restaurant._id.toString(),
+  );
 
   return {
     restaurant: restaurantView,
     settings: normalizeSiteSettings(template.settings),
     media: template.media,
     blocks: template.blocks as SiteBlock[],
+    menuCategories,
   };
 }
 
@@ -100,6 +105,7 @@ export default async function PublicSitePage({ params }: PublicSitePageProps) {
       media={data.media}
       settings={data.settings}
       restaurant={data.restaurant}
+      menuCategories={data.menuCategories}
     />
   );
 }

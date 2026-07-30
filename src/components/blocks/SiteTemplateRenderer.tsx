@@ -6,6 +6,7 @@ import LocationBlockView from "@/components/blocks/LocationBlock";
 import MenuBlockView from "@/components/blocks/MenuBlock";
 import NavbarBlockView from "@/components/blocks/NavbarBlock";
 import type { SiteBuilderRestaurant } from "@/components/SiteBuilderProvider";
+import type { ExtractedCategory } from "@/lib/menu-extract";
 import {
   getGoogleFontsStylesheetUrl,
   resolveMediaUrl,
@@ -15,7 +16,7 @@ import {
   type SiteTemplateSettings,
 } from "@/lib/site-template";
 import { cn } from "@/lib/utils";
-import type { CSSProperties } from "react";
+import { CSSProperties } from "react";
 
 type SiteTemplateRendererProps = {
   blocks: SiteBlock[];
@@ -24,6 +25,8 @@ type SiteTemplateRendererProps = {
   restaurant: SiteBuilderRestaurant;
   /** Preview chrome in the editor; full-bleed for the public page. */
   variant?: "preview" | "public";
+  /** When omitted (preview), MenuBlock shows sample items. */
+  menuCategories?: ExtractedCategory[];
 };
 
 export default function SiteTemplateRenderer({
@@ -32,6 +35,7 @@ export default function SiteTemplateRenderer({
   settings,
   restaurant,
   variant = "preview",
+  menuCategories,
 }: SiteTemplateRendererProps) {
   const { colors } = settings;
   const fonts = resolveSiteFonts(settings);
@@ -41,17 +45,21 @@ export default function SiteTemplateRenderer({
   ]);
 
   return (
-    <>
-      {googleFontsUrl ? (
-        // eslint-disable-next-line @next/next/no-page-custom-font
-        <link rel="stylesheet" href={googleFontsUrl} />
-      ) : null}
+    <main
+      className="h-full"
+      style={{
+        backgroundColor: colors.background,
+        color: colors.foreground,
+        fontFamily: fonts.body,
+      }}
+    >
+      {googleFontsUrl ? <link rel="stylesheet" href={googleFontsUrl} /> : null}
       <div
         className={cn(
           "[&_h1]:[font-family:var(--site-header-font)] [&_h2]:[font-family:var(--site-header-font)] [&_h3]:[font-family:var(--site-header-font)]",
           variant === "preview" &&
             "overflow-hidden rounded-xl border border-border",
-          variant === "public" && "min-h-svh",
+          variant === "public" && "min-h-svh w-full max-w-7xl mx-auto",
         )}
         style={
           {
@@ -63,88 +71,89 @@ export default function SiteTemplateRenderer({
           } as CSSProperties
         }
       >
-      {blocks.map((block) => {
-        switch (block.type) {
-          case "navbar":
-            return (
-              <NavbarBlockView
-                key={block.id}
-                block={block}
-                restaurant={restaurant}
-                primaryColor={colors.primary}
-                foregroundColor={colors.foreground}
-                backgroundColor={colors.background}
-              />
-            );
-          case "hero":
-            return (
-              <HeroBlockView
-                key={block.id}
-                block={block}
-                imageUrl={resolveMediaUrl(media, block.imageId)}
-                primaryColor={colors.primary}
-                foregroundColor={colors.foreground}
-                backgroundColor={colors.background}
-              />
-            );
-          case "about":
-            return (
-              <AboutBlockView
-                key={block.id}
-                block={block}
-                imageUrl={resolveMediaUrl(media, block.imageId)}
-                primaryColor={colors.primary}
-                foregroundColor={colors.foreground}
-              />
-            );
-          case "menu":
-            return (
-              <MenuBlockView
-                key={block.id}
-                block={block}
-                primaryColor={colors.primary}
-                foregroundColor={colors.foreground}
-                secondaryColor={colors.secondary}
-              />
-            );
-          case "location":
-            return (
-              <LocationBlockView
-                key={block.id}
-                block={block}
-                restaurant={restaurant}
-                primaryColor={colors.primary}
-                foregroundColor={colors.foreground}
-                secondaryColor={colors.secondary}
-              />
-            );
-          case "inviteForm":
-            return (
-              <InviteFormBlockView
-                key={block.id}
-                block={block}
-                primaryColor={colors.primary}
-                foregroundColor={colors.foreground}
-                backgroundColor={colors.background}
-                secondaryColor={colors.secondary}
-              />
-            );
-          case "footer":
-            return (
-              <FooterBlockView
-                key={block.id}
-                block={block}
-                restaurant={restaurant}
-                primaryColor={colors.primary}
-                foregroundColor={colors.foreground}
-                backgroundColor={colors.background}
-              />
-            );
-          default:
-            return null;
-        }
-      })}
+        {blocks.map((block) => {
+          switch (block.type) {
+            case "navbar":
+              return (
+                <NavbarBlockView
+                  key={block.id}
+                  block={block}
+                  restaurant={restaurant}
+                  primaryColor={colors.primary}
+                  foregroundColor={colors.foreground}
+                  backgroundColor={colors.background}
+                />
+              );
+            case "hero":
+              return (
+                <HeroBlockView
+                  key={block.id}
+                  block={block}
+                  imageUrl={resolveMediaUrl(media, block.imageId)}
+                  primaryColor={colors.primary}
+                  foregroundColor={colors.foreground}
+                  backgroundColor={colors.background}
+                />
+              );
+            case "about":
+              return (
+                <AboutBlockView
+                  key={block.id}
+                  block={block}
+                  imageUrl={resolveMediaUrl(media, block.imageId)}
+                  primaryColor={colors.primary}
+                  foregroundColor={colors.foreground}
+                />
+              );
+            case "menu":
+              return (
+                <MenuBlockView
+                  key={block.id}
+                  block={block}
+                  primaryColor={colors.primary}
+                  foregroundColor={colors.foreground}
+                  secondaryColor={colors.secondary}
+                  categories={menuCategories}
+                />
+              );
+            case "location":
+              return (
+                <LocationBlockView
+                  key={block.id}
+                  block={block}
+                  restaurant={restaurant}
+                  primaryColor={colors.primary}
+                  foregroundColor={colors.foreground}
+                  secondaryColor={colors.secondary}
+                />
+              );
+            case "inviteForm":
+              return (
+                <InviteFormBlockView
+                  key={block.id}
+                  block={block}
+                  primaryColor={colors.primary}
+                  foregroundColor={colors.foreground}
+                  backgroundColor={colors.background}
+                  secondaryColor={colors.secondary}
+                />
+              );
+            case "footer":
+              return (
+                <FooterBlockView
+                  key={block.id}
+                  block={block}
+                  restaurant={restaurant}
+                  primaryColor={colors.primary}
+                  foregroundColor={colors.foreground}
+                  backgroundColor={colors.background}
+                />
+              );
+            default:
+              return null;
+          }
+        })}
       </div>
-    </>
+    </main>
   );
 }
