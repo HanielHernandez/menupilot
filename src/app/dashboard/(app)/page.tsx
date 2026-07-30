@@ -6,7 +6,6 @@ import { CategoryModel } from "@/models/category.model";
 import { MenuItemModel } from "@/models/menu-item.model";
 import {
   RestaurantModel as Restaurant,
-  type Restaurant as RestaurantI,
 } from "@/models/restaurant.model";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -22,7 +21,7 @@ export default async function DashboardPage() {
     redirect("/auth/signin");
   }
 
-  const restaurant = await Restaurant.findOne<RestaurantI>({
+  const restaurant = await Restaurant.findOne({
     ownerId: session.user.id,
     deletedAt: null,
   });
@@ -69,17 +68,17 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row h-full max-h-96 justify-center items-start align-baseline md:flex-wrap">
+      <div className="flex flex-col gap-4 md:flex-row h-full lg:max-h-96 justify-center items-start ">
         <ResturantDetails
           restaurant={restaurant}
           className="w-full h-full md:w-1/2 lg:w-1/3"
         />
         <MenuItemsWidget
           items={widgetItems}
-          className="w-full md:w-1/2 lg:flex-1"
+          className="w-full md:w-1/2 h-full "
         />
       </div>
-      <div>
+      <div className="flex flex-col gap-4 md:flex-row flex-wrap">
         <h2 className="text-foreground text-2xl font-bold tracking-tight">
           Your Restaurant
         </h2>

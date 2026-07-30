@@ -57,6 +57,55 @@ export async function createRestaurant(input: CreateRestaurantInput) {
   return restaurant.toObject() as Restaurant & { _id: string };
 }
 
+export type UpdateRestaurantInput = {
+  name: string;
+  description?: string;
+  logoImage?: string;
+  address?: string;
+  phoneNumber?: string;
+  whatsappNumber?: string;
+  socials?: {
+    facebook?: string;
+    instagram?: string;
+    tiktok?: string;
+    x?: string;
+    youtube?: string;
+    website?: string;
+  };
+};
+
+export async function updateRestaurantByOwnerId(
+  ownerId: string,
+  input: UpdateRestaurantInput,
+) {
+  await connectDB();
+
+  const restaurant = await RestaurantModel.findOneAndUpdate(
+    { ownerId, deletedAt: null },
+    {
+      $set: {
+        name: input.name.trim(),
+        description: input.description?.trim() ?? "",
+        logoImage: input.logoImage?.trim() ?? "",
+        address: input.address?.trim() ?? "",
+        phoneNumber: input.phoneNumber?.trim() ?? "",
+        whatsappNumber: input.whatsappNumber?.trim() ?? "",
+        socials: {
+          facebook: input.socials?.facebook?.trim() ?? "",
+          instagram: input.socials?.instagram?.trim() ?? "",
+          tiktok: input.socials?.tiktok?.trim() ?? "",
+          x: input.socials?.x?.trim() ?? "",
+          youtube: input.socials?.youtube?.trim() ?? "",
+          website: input.socials?.website?.trim() ?? "",
+        },
+      },
+    },
+    { new: true, runValidators: true },
+  ).lean();
+
+  return restaurant;
+}
+
 export function slugify(value: string) {
   return value
     .toLowerCase()

@@ -27,6 +27,7 @@ import {
   Globe2Icon,
   LayoutDashboardIcon,
   LogOutIcon,
+  StoreIcon,
   TagsIcon,
   UtensilsIcon,
 } from "lucide-react";
@@ -38,6 +39,11 @@ const navigation = [
     title: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboardIcon,
+  },
+  {
+    title: "My restaurant",
+    href: "/dashboard/restaurant",
+    icon: StoreIcon,
   },
   {
     title: "Menu",
