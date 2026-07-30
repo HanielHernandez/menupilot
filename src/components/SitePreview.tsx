@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { DEFAULT_SITE_TEMPLATE } from "@/lib/site-template";
+import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 import { useFormContext, useWatch } from "react-hook-form";
 
@@ -37,12 +38,12 @@ export default function SitePreview({ className }: SitePreviewProps) {
   );
 
   return (
-    <Card className={className}>
-      <CardHeader>
+    <Card className={cn("h-full min-h-0", className)}>
+      <CardHeader className="shrink-0 border-b">
         <CardTitle>Preview</CardTitle>
         <CardDescription>Live site template</CardDescription>
       </CardHeader>
-      <CardContent className="max-h-[80vh] overflow-y-auto">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto">
         <SiteTemplateRenderer
           blocks={template.blocks}
           media={template.media}

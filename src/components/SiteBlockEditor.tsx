@@ -54,12 +54,11 @@ export default function SiteBlockEditor({ className }: SiteBlockEditorProps) {
 
   if (!open) {
     return (
-      <div className={cn("shrink-0", className)}>
+      <div className={cn("flex h-full shrink-0 items-start", className)}>
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="lg:sticky lg:top-6"
           aria-label="Open block editor"
           onClick={() => setOpen(true)}
         >
@@ -72,11 +71,11 @@ export default function SiteBlockEditor({ className }: SiteBlockEditorProps) {
   return (
     <Card
       className={cn(
-        "w-full shrink-0 lg:sticky lg:top-6 lg:w-[320px]",
+        "h-full min-h-0 w-full shrink-0 lg:w-[320px]",
         className,
       )}
     >
-      <CardHeader className="flex-row items-start justify-between gap-2 space-y-0">
+      <CardHeader className="shrink-0 flex-row items-start justify-between gap-2 space-y-0 border-b">
         <div className="flex flex-col gap-1">
           <CardTitle>Blocks</CardTitle>
           <CardDescription>
@@ -93,7 +92,7 @@ export default function SiteBlockEditor({ className }: SiteBlockEditorProps) {
           <ChevronRightIcon className="size-4" />
         </Button>
       </CardHeader>
-      <CardContent className="max-h-[80vh] overflow-y-auto">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto">
         <ul className="flex flex-col gap-4">
           {fields.map((item, index) => {
             const block = blocks[index] as SiteBlock | undefined;

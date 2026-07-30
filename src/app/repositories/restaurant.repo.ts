@@ -1,8 +1,11 @@
 import { connectDB } from "@/lib/db";
+import { slugify } from "@/lib/slug";
 import {
   RestaurantModel,
   type Restaurant,
 } from "@/models/restaurant.model";
+
+export { slugify };
 
 export type CreateRestaurantInput = {
   name: string;
@@ -59,6 +62,7 @@ export async function createRestaurant(input: CreateRestaurantInput) {
 
 export type UpdateRestaurantInput = {
   name: string;
+  slug: string;
   description?: string;
   logoMediaId?: string | null;
   address?: string;
@@ -85,6 +89,7 @@ export async function updateRestaurantByOwnerId(
     {
       $set: {
         name: input.name.trim(),
+        slug: input.slug.trim().toLowerCase(),
         description: input.description?.trim() ?? "",
         logoMediaId: input.logoMediaId?.trim() || null,
         address: input.address?.trim() ?? "",
@@ -106,24 +111,24 @@ export async function updateRestaurantByOwnerId(
   return restaurant;
 }
 
-export function slugify(value: string) {
-  return value
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-}
-
-export async function createUniqueSlug(name: string) {
+export async function createUniqueSlug(
+  name: string,
+  excludeRestaurantId?: string,
+) {
   const base = slugify(name) || "restaurant";
   let slug = base;
   let attempt = 1;
 
-  while (await findRestaurantBySlug(slug)) {
+  while (true) {
+    const existing = await findRestaurantBySlug(slug);
+    if (
+      !existing ||
+      (excludeRestaurantId &&
+        existing._id.toString() === excludeRestaurantId)
+    ) {
+      return slug;
+    }
     attempt += 1;
     slug = `${base}-${attempt}`;
   }
-
-  return slug;
 }

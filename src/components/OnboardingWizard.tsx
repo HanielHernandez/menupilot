@@ -1,6 +1,9 @@
 "use client";
 
-import { createRestaurantAction } from "@/app/actions/restaurant";
+import {
+  createRestaurantAction,
+  suggestUniqueSlugAction,
+} from "@/app/actions/restaurant";
 import { Button } from "@/components/ui/button";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
@@ -8,9 +11,10 @@ import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { slugify } from "@/lib/slug";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import * as z from "zod";
 
@@ -24,6 +28,13 @@ const optionalUrl = z
 
 const restaurantSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
+  slug: z
+    .string()
+    .trim()
+    .min(1, { message: "Slug is required" })
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+      message: "Slug must be lowercase letters, numbers, and hyphens",
+    }),
   description: z.string().optional(),
   address: z.string().optional(),
   phoneNumber: z.string().optional(),
@@ -80,17 +91,20 @@ export default function OnboardingWizard() {
   const [sameAsPhone, setSameAsPhone] = useState(false);
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [createdSlug, setCreatedSlug] = useState<string | null>(null);
+  const [isCheckingSlug, setIsCheckingSlug] = useState(false);
 
   const {
     handleSubmit,
     control,
     setValue,
     trigger,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm<RestaurantFormSchema>({
     resolver: zodResolver(restaurantSchema),
     defaultValues: {
       name: "",
+      slug: "",
       description: "",
       address: "",
       phoneNumber: "",
@@ -108,10 +122,44 @@ export default function OnboardingWizard() {
   });
 
   const phoneNumber = useWatch({ control, name: "phoneNumber" });
+  const restaurantName = useWatch({ control, name: "name" }) ?? "";
+  const siteSlug = useWatch({ control, name: "slug" }) ?? "";
+
+  useEffect(() => {
+    const base = slugify(restaurantName);
+    if (!base) {
+      setValue("slug", "", { shouldValidate: false });
+      setIsCheckingSlug(false);
+      return;
+    }
+
+    let cancelled = false;
+    setIsCheckingSlug(true);
+
+    const timer = setTimeout(() => {
+      void (async () => {
+        const result = await suggestUniqueSlugAction(restaurantName);
+        if (cancelled) return;
+
+        if (result.success) {
+          setValue("slug", result.slug, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+        }
+        setIsCheckingSlug(false);
+      })();
+    }, 350);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [restaurantName, setValue]);
 
   const goNext = async () => {
     const fieldsByStep = {
-      1: ["name", "description"] as const,
+      1: ["name", "slug", "description"] as const,
       2: ["address", "phoneNumber", "whatsappNumber"] as const,
       3: [
         "socials.instagram",
@@ -122,6 +170,10 @@ export default function OnboardingWizard() {
         "socials.website",
       ] as const,
     };
+
+    if (currentStep === 1 && (isCheckingSlug || !siteSlug)) {
+      return;
+    }
 
     const valid = await trigger([...fieldsByStep[currentStep as 1 | 2 | 3]]);
     if (!valid) return;
@@ -146,13 +198,17 @@ export default function OnboardingWizard() {
   const submitForm = async (data: RestaurantFormSchema) => {
     setServerError(null);
 
-    const result = await createRestaurantAction(data);
+    const result = await createRestaurantAction({
+      ...data,
+      whatsappNumber: sameAsPhone ? data.phoneNumber : data.whatsappNumber,
+    });
 
     if (!result.success) {
       setServerError(result.error);
       return;
     }
 
+    setCreatedSlug(result.slug);
     setIsSuccess(true);
   };
 
@@ -164,6 +220,14 @@ export default function OnboardingWizard() {
           <p className="text-muted-foreground text-sm">
             Your restaurant is ready. Head to the dashboard to keep building.
           </p>
+          {createdSlug ? (
+            <p className="text-muted-foreground text-sm">
+              Public site path:{" "}
+              <span className="font-medium text-foreground">
+                /site/{createdSlug}
+              </span>
+            </p>
+          ) : null}
           <Button size="lg" render={<Link href="/dashboard" />}>
             Go to dashboard
           </Button>
@@ -200,6 +264,33 @@ export default function OnboardingWizard() {
                   </Field>
                 )}
               />
+
+              <Field>
+                <FieldLabel>Site slug</FieldLabel>
+                <div className="bg-muted flex min-h-9 items-center gap-2 rounded-lg border px-3 py-2 text-sm">
+                  <span className="text-muted-foreground shrink-0">
+                    /site/
+                  </span>
+                  {isCheckingSlug ? (
+                    <span className="text-muted-foreground inline-flex items-center gap-2">
+                      <Spinner />
+                      Checking availability…
+                    </span>
+                  ) : (
+                    <span className="font-medium break-all">
+                      {siteSlug || "your-restaurant"}
+                    </span>
+                  )}
+                </div>
+                <p className="text-muted-foreground text-xs">
+                  Generated from your restaurant name. If that slug is taken,
+                  we&apos;ll add a number to keep it unique.
+                </p>
+                {errors.slug?.message ? (
+                  <FieldError>{errors.slug.message}</FieldError>
+                ) : null}
+              </Field>
+
               <Controller
                 control={control}
                 name="description"
@@ -354,7 +445,10 @@ export default function OnboardingWizard() {
                 type="button"
                 size="lg"
                 onClick={goNext}
-                disabled={isSubmitting}
+                disabled={
+                  isSubmitting ||
+                  (currentStep === 1 && (isCheckingSlug || !siteSlug))
+                }
               >
                 Next
               </Button>

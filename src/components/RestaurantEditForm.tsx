@@ -18,6 +18,7 @@ import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { slugify } from "@/lib/slug";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -44,6 +45,13 @@ const optionalMediaId = z
 
 const restaurantSchema = z.object({
   name: z.string().min(1, { message: "Name is required" }),
+  slug: z
+    .string()
+    .trim()
+    .min(1, { message: "Slug is required" })
+    .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, {
+      message: "Slug must be lowercase letters, numbers, and hyphens",
+    }),
   description: z.string().optional(),
   logoMediaId: optionalMediaId,
   address: z.string().optional(),
@@ -63,6 +71,7 @@ type RestaurantFormSchema = z.infer<typeof restaurantSchema>;
 
 export type RestaurantEditFormValues = {
   name: string;
+  slug: string;
   description: string;
   logoMediaId: string;
   logoUrl?: string;
@@ -224,7 +233,40 @@ export default function RestaurantEditForm({
               render={({ field, fieldState }) => (
                 <Field>
                   <FieldLabel>Name</FieldLabel>
-                  <Input {...field} value={field.value ?? ""} />
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(event) => {
+                      field.onChange(event);
+                      setValue("slug", slugify(event.target.value), {
+                        shouldDirty: true,
+                        shouldValidate: true,
+                      });
+                    }}
+                  />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </Field>
+              )}
+            />
+            <Controller
+              control={control}
+              name="slug"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Slug</FieldLabel>
+                  <Input
+                    {...field}
+                    value={field.value ?? ""}
+                    onChange={(event) => {
+                      field.onChange(slugify(event.target.value));
+                    }}
+                    placeholder="my-restaurant"
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Used in your public URL: /site/{field.value || "your-slug"}
+                  </p>
                   {fieldState.error ? (
                     <FieldError>{fieldState.error.message}</FieldError>
                   ) : null}

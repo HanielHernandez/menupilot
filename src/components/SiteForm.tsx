@@ -1,11 +1,12 @@
 "use client";
 
 import { saveSiteAction } from "@/app/actions/saveSite";
+import type { SitePublishStatus } from "@/app/repositories/site.repo";
+import { MediaPreviewDialog } from "@/components/MediaPreviewDialog";
 import {
   MediaSelectorModal,
   type MediaSelectorItem,
 } from "@/components/MediaSelectorModal";
-import { ReplaceableImage } from "@/components/ReplaceableImage";
 import type { SiteBuilderValues } from "@/components/SiteBuilderProvider";
 import { useSiteBuilder } from "@/components/SiteBuilderProvider";
 import { Button } from "@/components/ui/button";
@@ -13,15 +14,19 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
-import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import {
   FONT_OPTIONS,
@@ -29,7 +34,12 @@ import {
   findTypographyPreset,
 } from "@/lib/site-template";
 import { cn } from "@/lib/utils";
-import { PlusIcon, SaveIcon, Trash2Icon } from "lucide-react";
+import {
+  ImageIcon,
+  MoreVerticalIcon,
+  PencilIcon,
+  Trash2Icon,
+} from "lucide-react";
 import { useState, type ReactNode } from "react";
 import {
   Controller,
@@ -46,6 +56,9 @@ const COLOR_FIELDS = [
   { name: "background", label: "Background" },
   { name: "foreground", label: "Foreground" },
 ] as const;
+
+const selectClassName =
+  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-base transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:bg-input/50 disabled:opacity-50 aria-invalid:border-destructive aria-invalid:ring-3 aria-invalid:ring-destructive/20 md:text-sm dark:bg-input/30 dark:disabled:bg-input/80";
 
 function ColorField({
   label,
@@ -101,7 +114,13 @@ function FormSection({
   );
 }
 
-export default function SiteForm() {
+export default function SiteForm({
+  onStatusChange,
+  className,
+}: {
+  onStatusChange?: (status: SitePublishStatus) => void;
+  className?: string;
+}) {
   const { restaurantId } = useSiteBuilder();
   const {
     control,
@@ -110,9 +129,12 @@ export default function SiteForm() {
     formState: { isSubmitting, errors },
   } = useFormContext<SiteBuilderValues>();
 
-  const [addMediaOpen, setAddMediaOpen] = useState(false);
+  const [editMediaIndex, setEditMediaIndex] = useState<number | null>(null);
+  const [previewMediaIndex, setPreviewMediaIndex] = useState<number | null>(
+    null,
+  );
 
-  const { fields, append, remove } = useFieldArray({
+  const { fields, remove } = useFieldArray({
     control,
     name: "media",
     keyName: "fieldKey",
@@ -139,12 +161,12 @@ export default function SiteForm() {
     setValue("settings.fonts.useHeaderAsBody", false, { shouldDirty: true });
   };
 
-  const handleAddMedia = (items: MediaSelectorItem[]) => {
-    for (const item of items) {
-      const alreadyAdded = mediaItems.some((media) => media.id === item.id);
-      if (alreadyAdded) continue;
-      append({ id: item.id, url: item.url });
-    }
+  const handleReplaceMedia = (items: MediaSelectorItem[]) => {
+    const media = items[0];
+    if (editMediaIndex == null || !media) return;
+    setValue(`media.${editMediaIndex}.id`, media.id, { shouldDirty: true });
+    setValue(`media.${editMediaIndex}.url`, media.url, { shouldDirty: true });
+    setEditMediaIndex(null);
   };
 
   const onSubmit = handleSubmit(async (values) => {
@@ -161,20 +183,25 @@ export default function SiteForm() {
       return;
     }
 
-    toast.success("Site settings saved");
+    onStatusChange?.(result.status);
+    toast.success("Draft saved");
   });
 
   return (
-    <form onSubmit={onSubmit}>
-      <Card>
-        <CardHeader>
+    <form
+      id="site-form"
+      onSubmit={onSubmit}
+      className={cn("flex h-full min-h-0 flex-col", className)}
+    >
+      <Card className="h-full min-h-0">
+        <CardHeader className="shrink-0 border-b">
           <CardTitle>Site settings</CardTitle>
           <CardDescription>
             Edit template settings, media, and block content.
           </CardDescription>
         </CardHeader>
 
-        <CardContent className="flex flex-col gap-6">
+        <CardContent className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto">
           <FormSection
             title="Colors"
             description="Theme colors used across your public site."
@@ -205,41 +232,36 @@ export default function SiteForm() {
             description="Pick a preset pairing, or customize header and body fonts."
           >
             <div className="flex flex-col gap-4">
-              <div className="grid gap-2 sm:grid-cols-2">
-                {TYPOGRAPHY_PRESETS.map((preset) => {
-                  const isActive = activePreset?.id === preset.id;
-                  return (
-                    <button
-                      key={preset.id}
-                      type="button"
-                      onClick={() => applyTypographyPreset(preset.id)}
-                      className={cn(
-                        "rounded-xl border p-3 text-left transition-colors outline-none",
-                        "hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50",
-                        isActive
-                          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
-                          : "border-border",
-                      )}
-                    >
-                      <p
-                        className="text-sm font-semibold tracking-tight"
-                        style={{ fontFamily: preset.header }}
-                      >
-                        {preset.label}
-                      </p>
-                      <p
-                        className="text-muted-foreground mt-1 text-xs"
-                        style={{ fontFamily: preset.body }}
-                      >
-                        {preset.header} · {preset.body}
-                      </p>
-                      <p className="text-muted-foreground mt-1 text-xs">
-                        {preset.description}
-                      </p>
-                    </button>
-                  );
-                })}
-              </div>
+              <Field>
+                <FieldLabel>Font combination</FieldLabel>
+                <select
+                  className={selectClassName}
+                  value={activePreset?.id ?? ""}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    if (!value) return;
+                    applyTypographyPreset(value);
+                  }}
+                >
+                  <option value="" disabled>
+                    Custom combination
+                  </option>
+                  {TYPOGRAPHY_PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.label} — {preset.header} / {preset.body}
+                    </option>
+                  ))}
+                </select>
+                {activePreset ? (
+                  <p className="text-muted-foreground text-xs">
+                    {activePreset.description}
+                  </p>
+                ) : (
+                  <p className="text-muted-foreground text-xs">
+                    Choose a preset, or set header and body fonts below.
+                  </p>
+                )}
+              </Field>
 
               <Controller
                 control={control}
@@ -247,19 +269,26 @@ export default function SiteForm() {
                 render={({ field, fieldState }) => (
                   <Field>
                     <FieldLabel>Header font</FieldLabel>
-                    <Input
-                      list="site-header-font-options"
-                      placeholder="Playfair Display"
+                    <select
+                      className={selectClassName}
                       value={field.value}
                       onChange={field.onChange}
                       aria-invalid={Boolean(fieldState.error)}
                       style={{ fontFamily: field.value }}
-                    />
-                    <datalist id="site-header-font-options">
+                    >
+                      {!FONT_OPTIONS.includes(field.value) && field.value ? (
+                        <option value={field.value}>{field.value}</option>
+                      ) : null}
                       {FONT_OPTIONS.map((font) => (
-                        <option key={font} value={font} />
+                        <option
+                          key={font}
+                          value={font}
+                          style={{ fontFamily: font }}
+                        >
+                          {font}
+                        </option>
                       ))}
-                    </datalist>
+                    </select>
                     {fieldState.error ? (
                       <FieldError>{fieldState.error.message}</FieldError>
                     ) : null}
@@ -291,30 +320,42 @@ export default function SiteForm() {
               <Controller
                 control={control}
                 name="settings.fonts.body"
-                render={({ field, fieldState }) => (
-                  <Field>
-                    <FieldLabel>Body font</FieldLabel>
-                    <Input
-                      list="site-body-font-options"
-                      placeholder="Inter"
-                      value={useHeaderAsBody ? headerFont : field.value}
-                      onChange={field.onChange}
-                      disabled={useHeaderAsBody}
-                      aria-invalid={Boolean(fieldState.error)}
-                      style={{
-                        fontFamily: useHeaderAsBody ? headerFont : field.value,
-                      }}
-                    />
-                    <datalist id="site-body-font-options">
-                      {FONT_OPTIONS.map((font) => (
-                        <option key={font} value={font} />
-                      ))}
-                    </datalist>
-                    {fieldState.error ? (
-                      <FieldError>{fieldState.error.message}</FieldError>
-                    ) : null}
-                  </Field>
-                )}
+                render={({ field, fieldState }) => {
+                  const displayValue = useHeaderAsBody
+                    ? headerFont
+                    : field.value;
+
+                  return (
+                    <Field>
+                      <FieldLabel>Body font</FieldLabel>
+                      <select
+                        className={selectClassName}
+                        value={displayValue}
+                        onChange={field.onChange}
+                        disabled={useHeaderAsBody}
+                        aria-invalid={Boolean(fieldState.error)}
+                        style={{ fontFamily: displayValue }}
+                      >
+                        {!FONT_OPTIONS.includes(displayValue) &&
+                        displayValue ? (
+                          <option value={displayValue}>{displayValue}</option>
+                        ) : null}
+                        {FONT_OPTIONS.map((font) => (
+                          <option
+                            key={font}
+                            value={font}
+                            style={{ fontFamily: font }}
+                          >
+                            {font}
+                          </option>
+                        ))}
+                      </select>
+                      {fieldState.error ? (
+                        <FieldError>{fieldState.error.message}</FieldError>
+                      ) : null}
+                    </Field>
+                  );
+                }}
               />
             </div>
           </FormSection>
@@ -323,21 +364,9 @@ export default function SiteForm() {
 
           <FormSection
             title="Media"
-            description="Add or replace images from your media library. Blocks reference these by id."
+            description="Click an image to preview. Use the menu to edit or remove."
           >
             <div className="flex flex-col gap-4">
-              <div className="flex justify-end">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  disabled={isSubmitting}
-                  onClick={() => setAddMediaOpen(true)}
-                >
-                  <PlusIcon className="size-4" />
-                  Add images
-                </Button>
-              </div>
-
               {errors.media?.root?.message || errors.media?.message ? (
                 <FieldError>
                   {errors.media.root?.message || errors.media.message}
@@ -345,80 +374,118 @@ export default function SiteForm() {
               ) : null}
 
               {fields.length > 0 ? (
-                <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-                  {fields.map((item, index) => (
-                    <li
-                      key={item.fieldKey}
-                      className="flex flex-col gap-2 rounded-lg border border-border p-3"
-                    >
-                      <ReplaceableImage
-                        src={mediaItems[index]?.url}
-                        alt={`Media ${index + 1}`}
-                        mediaId={mediaItems[index]?.id}
-                        disabled={isSubmitting}
-                        className="aspect-video size-auto w-full rounded-md"
-                        modalTitle="Replace image"
-                        modalDescription="Upload a new image or pick one from your library."
-                        onReplace={(media) => {
-                          setValue(`media.${index}.id`, media.id, {
-                            shouldDirty: true,
-                          });
-                          setValue(`media.${index}.url`, media.url, {
-                            shouldDirty: true,
-                          });
-                        }}
-                      />
-                      <p className="text-muted-foreground truncate text-xs">
-                        id: {mediaItems[index]?.id}
-                      </p>
-                      <Button
-                        type="button"
-                        variant="destructive"
-                        size="sm"
-                        className="self-end"
-                        disabled={isSubmitting}
-                        onClick={() => remove(index)}
+                <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  {fields.map((item, index) => {
+                    const media = mediaItems[index];
+                    const imageUrl = media?.url?.trim();
+
+                    return (
+                      <li
+                        key={item.fieldKey}
+                        className="bg-muted relative aspect-4/3 overflow-hidden rounded-xl border"
                       >
-                        <Trash2Icon className="size-4" />
-                        Remove
-                      </Button>
-                    </li>
-                  ))}
+                        {imageUrl ? (
+                          <button
+                            type="button"
+                            onClick={() => setPreviewMediaIndex(index)}
+                            className="size-full cursor-zoom-in outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+                            aria-label={`Preview media ${index + 1}`}
+                          >
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img
+                              src={imageUrl}
+                              alt={`Media ${index + 1}`}
+                              className="size-full object-cover"
+                            />
+                          </button>
+                        ) : (
+                          <div className="text-muted-foreground flex size-full items-center justify-center">
+                            <ImageIcon className="size-10 opacity-50" />
+                          </div>
+                        )}
+
+                        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-linear-to-t from-black/70 to-transparent p-3 pt-10">
+                          <p className="truncate text-xs text-white">
+                            {media?.id || "No image selected"}
+                          </p>
+
+                          <DropdownMenu>
+                            <DropdownMenuTrigger
+                              render={
+                                <Button
+                                  type="button"
+                                  size="icon-sm"
+                                  variant="secondary"
+                                  className="pointer-events-auto shrink-0 bg-white/90 text-foreground hover:bg-white"
+                                  disabled={isSubmitting}
+                                  aria-label={`Media ${index + 1} options`}
+                                />
+                              }
+                            >
+                              <MoreVerticalIcon />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" side="top">
+                              <DropdownMenuItem
+                                onClick={() => setEditMediaIndex(index)}
+                              >
+                                <PencilIcon />
+                                Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                variant="destructive"
+                                onClick={() => remove(index)}
+                              >
+                                <Trash2Icon />
+                                Remove
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               ) : (
                 <p className="text-muted-foreground text-sm">
-                  No media yet. Click Add images to upload or pick from your
-                  library.
+                  No media slots yet. Default template media will appear here.
                 </p>
               )}
             </div>
           </FormSection>
         </CardContent>
-
-        <CardFooter className="justify-end border-t">
-          <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? (
-              <>
-                <Spinner />
-                Saving…
-              </>
-            ) : (
-              <>
-                <SaveIcon className="size-4" />
-                Save site
-              </>
-            )}
-          </Button>
-        </CardFooter>
       </Card>
 
+      <MediaPreviewDialog
+        open={previewMediaIndex !== null}
+        onOpenChange={(open) => {
+          if (!open) setPreviewMediaIndex(null);
+        }}
+        title="Media preview"
+        description="Selected site media"
+        item={
+          previewMediaIndex != null && mediaItems[previewMediaIndex]?.url
+            ? {
+                url: mediaItems[previewMediaIndex].url,
+                id: mediaItems[previewMediaIndex].id,
+              }
+            : null
+        }
+      />
+
       <MediaSelectorModal
-        open={addMediaOpen}
-        onOpenChange={setAddMediaOpen}
-        multiple
-        title="Add site media"
-        description="Upload new images or pick existing ones from your library."
-        onAccept={handleAddMedia}
+        open={editMediaIndex !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditMediaIndex(null);
+        }}
+        multiple={false}
+        title="Select image"
+        description="Upload a new image or pick one from your library."
+        initialSelectedIds={
+          editMediaIndex != null && mediaItems[editMediaIndex]?.id
+            ? [mediaItems[editMediaIndex].id]
+            : []
+        }
+        onAccept={handleReplaceMedia}
       />
     </form>
   );

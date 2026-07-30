@@ -40,12 +40,14 @@ export default async function DashboardAppLayout({
     <TooltipProvider>
       <SidebarProvider>
         <AppSidebar user={session.user} />
-        <SidebarInset>
+        <SidebarInset className="h-svh overflow-hidden">
           <header className="flex h-14 shrink-0 items-center gap-3 border-b px-4">
             <SidebarTrigger />
             <h1 className="font-semibold">Dashboard</h1>
           </header>
-          <div className="flex flex-1 flex-col p-6">{children}</div>
+          <div className="flex min-h-0 flex-1 flex-col overflow-y-auto p-6">
+            {children}
+          </div>
         </SidebarInset>
       </SidebarProvider>
     </TooltipProvider>

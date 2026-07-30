@@ -1,10 +1,12 @@
+import type {
+  SiteBlock,
+  SiteTemplateMedia,
+  SiteTemplateSettings,
+} from "@/lib/site-template";
 import {
   SiteBlockSchema,
   SiteMediaSchema,
   SiteSettingsSchema,
-  type SiteBlock,
-  type SiteTemplateMedia,
-  type SiteTemplateSettings,
 } from "@/models/site.model";
 import mongoose, { InferSchemaType, Schema } from "mongoose";
 

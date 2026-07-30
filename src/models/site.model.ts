@@ -126,7 +126,7 @@ export type Site = InferSchemaType<typeof SiteSchema> & {
 
 export type SiteSettings = SiteTemplateSettings;
 export type SiteMedia = SiteTemplateMedia;
-export type { SiteBlock, SiteTemplate };
+export type { SiteBlock, SiteTemplate, SiteTemplateMedia, SiteTemplateSettings };
 
 /**
  * Use a fresh model name so Turbopack/dev can't keep a stale `Site` schema

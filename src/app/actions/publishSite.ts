@@ -1,6 +1,7 @@
 "use server";
 
 import {
+  publishSiteDraft,
   saveSiteDraft,
   type SitePublishStatus,
 } from "@/app/repositories/site.repo";
@@ -14,23 +15,13 @@ import { RestaurantModel } from "@/models/restaurant.model";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
-export type SaveSiteResult =
+export type PublishSiteResult =
   | { success: true; status: SitePublishStatus }
   | { success: false; error: string };
 
-async function requireOwnedRestaurant(restaurantId: string, userId: string) {
-  await connectDB();
-
-  return RestaurantModel.findOne({
-    _id: restaurantId,
-    ownerId: userId,
-    deletedAt: null,
-  });
-}
-
-export async function saveSiteAction(
+export async function publishSiteAction(
   input: SaveSiteFormInput,
-): Promise<SaveSiteResult> {
+): Promise<PublishSiteResult> {
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -47,33 +38,42 @@ export async function saveSiteAction(
     };
   }
 
-  const restaurant = await requireOwnedRestaurant(
-    parsed.data.restaurantId,
-    session.user.id,
-  );
+  await connectDB();
+
+  const restaurant = await RestaurantModel.findOne({
+    _id: parsed.data.restaurantId,
+    ownerId: session.user.id,
+    deletedAt: null,
+  });
 
   if (!restaurant) {
     return { success: false, error: "Restaurant not found" };
   }
 
+  const restaurantId = restaurant._id.toString();
+
   try {
-    const { status } = await saveSiteDraft({
-      restaurantId: restaurant._id.toString(),
+    await saveSiteDraft({
+      restaurantId,
       templateId: parsed.data.templateId,
       settings: parsed.data.settings,
       media: parsed.data.media,
-      blocks: parsed.data.blocks as UpsertBlocks,
+      blocks: parsed.data.blocks as Parameters<typeof saveSiteDraft>[0]["blocks"],
     });
 
+    const { status } = await publishSiteDraft(restaurantId);
+
     revalidatePath("/dashboard/site");
+    revalidatePath(`/site/${restaurant.slug}`);
     return { success: true, status };
   } catch (error) {
-    console.error("Failed to save site draft", error);
+    console.error("Failed to publish site", error);
     return {
       success: false,
-      error: "Could not save draft. Please try again.",
+      error:
+        error instanceof Error && error.message
+          ? error.message
+          : "Could not publish site. Please try again.",
     };
   }
 }
-
-type UpsertBlocks = Parameters<typeof saveSiteDraft>[0]["blocks"];

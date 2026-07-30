@@ -46,6 +46,7 @@ export default async function RestaurantPage() {
       <RestaurantEditForm
         initialValues={{
           name: restaurant.name,
+          slug: restaurant.slug,
           description: restaurant.description ?? "",
           logoMediaId,
           logoUrl: logoMedia?.url ?? "",

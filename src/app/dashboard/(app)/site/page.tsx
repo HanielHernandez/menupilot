@@ -1,4 +1,4 @@
-import { getOrCreateSiteForRestaurant } from "@/app/repositories/site.repo";
+import { getOrCreateSiteDraftForRestaurant } from "@/app/repositories/site.repo";
 import SiteBuilder from "@/components/SiteBuilder";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
@@ -27,7 +27,9 @@ export default async function SitePage() {
     redirect("/dashboard/onboarding");
   }
 
-  const site = await getOrCreateSiteForRestaurant(restaurant._id.toString());
+  const { draft, status } = await getOrCreateSiteDraftForRestaurant(
+    restaurant._id.toString(),
+  );
   const logoMediaId = restaurant.logoMediaId?.toString() ?? null;
   const logoMedia = logoMediaId
     ? await MediaModel.findOne({
@@ -37,14 +39,7 @@ export default async function SitePage() {
     : null;
 
   return (
-    <div className="mx-auto flex w-full flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold">Site</h2>
-        <p className="text-muted-foreground text-sm">
-          Customize colors, typography, and media for {restaurant.name}
-        </p>
-      </div>
-
+    <div className="flex h-full min-h-0 w-full flex-col overflow-hidden">
       <SiteBuilder
         restaurant={{
           id: restaurant._id.toString(),
@@ -66,11 +61,12 @@ export default async function SitePage() {
           },
         }}
         initialValues={{
-          templateId: site.templateId,
-          settings: site.settings,
-          media: site.media ?? [],
-          blocks: site.blocks ?? [],
+          templateId: draft.templateId,
+          settings: draft.settings,
+          media: draft.media ?? [],
+          blocks: draft.blocks ?? [],
         }}
+        initialStatus={status}
       />
     </div>
   );

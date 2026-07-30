@@ -14,6 +14,7 @@ import {
   type SiteTemplateMedia,
   type SiteTemplateSettings,
 } from "@/lib/site-template";
+import { cn } from "@/lib/utils";
 import type { CSSProperties } from "react";
 
 type SiteTemplateRendererProps = {
@@ -21,6 +22,8 @@ type SiteTemplateRendererProps = {
   media: SiteTemplateMedia[];
   settings: SiteTemplateSettings;
   restaurant: SiteBuilderRestaurant;
+  /** Preview chrome in the editor; full-bleed for the public page. */
+  variant?: "preview" | "public";
 };
 
 export default function SiteTemplateRenderer({
@@ -28,6 +31,7 @@ export default function SiteTemplateRenderer({
   media,
   settings,
   restaurant,
+  variant = "preview",
 }: SiteTemplateRendererProps) {
   const { colors } = settings;
   const fonts = resolveSiteFonts(settings);
@@ -43,7 +47,12 @@ export default function SiteTemplateRenderer({
         <link rel="stylesheet" href={googleFontsUrl} />
       ) : null}
       <div
-        className="overflow-hidden rounded-xl border border-border [&_h1]:[font-family:var(--site-header-font)] [&_h2]:[font-family:var(--site-header-font)] [&_h3]:[font-family:var(--site-header-font)]"
+        className={cn(
+          "[&_h1]:[font-family:var(--site-header-font)] [&_h2]:[font-family:var(--site-header-font)] [&_h3]:[font-family:var(--site-header-font)]",
+          variant === "preview" &&
+            "overflow-hidden rounded-xl border border-border",
+          variant === "public" && "min-h-svh",
+        )}
         style={
           {
             backgroundColor: colors.background,

@@ -11,7 +11,7 @@ import type { ReactNode } from "react";
 
 export type MediaPreviewItem = {
   url: string;
-  name: string;
+  name?: string | null;
   id?: string | null;
   size?: number | null;
   createdAt?: string | null;
@@ -58,7 +58,7 @@ export function MediaPreviewDialog({
       <DialogContent className="flex max-h-[min(90vh,800px)] w-full flex-col gap-0 overflow-hidden p-0 sm:max-w-3xl">
         <DialogHeader className="gap-1 border-b p-4 pr-12">
           <DialogTitle className="truncate">
-            {item?.name ?? title ?? "Media preview"}
+            {item?.name || title || item?.id || "Media preview"}
           </DialogTitle>
           <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
@@ -69,16 +69,18 @@ export function MediaPreviewDialog({
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={item.url}
-                alt={item.name}
+                alt={item.name || item.id || "Media preview"}
                 className="max-h-[min(50vh,420px)] w-full object-contain"
               />
             </div>
 
             <dl className="flex w-full flex-col gap-4 md:max-w-xs">
-              <div>
-                <dt className="text-muted-foreground text-xs">Name</dt>
-                <dd className="mt-1 break-all font-medium">{item.name}</dd>
-              </div>
+              {item.name ? (
+                <div>
+                  <dt className="text-muted-foreground text-xs">Name</dt>
+                  <dd className="mt-1 break-all font-medium">{item.name}</dd>
+                </div>
+              ) : null}
               {item.id ? (
                 <div>
                   <dt className="text-muted-foreground text-xs">ID</dt>
