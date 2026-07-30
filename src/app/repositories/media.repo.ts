@@ -6,6 +6,8 @@ export type MediaRecord = {
   id: string;
   url: string;
   key: string;
+  name: string;
+  size: number | null;
   weight: number;
   restaurantId: string | null;
   userId: string | null;
@@ -17,6 +19,8 @@ export type CreateMediaInput = {
   restaurantId?: string | Types.ObjectId | null;
   userId?: string | null;
   weight?: number;
+  name?: string;
+  size?: number | null;
   url: string;
   key: string;
 };
@@ -35,20 +39,31 @@ export type ListMediaResult = {
   totalPages: number;
 };
 
+function nameFromKey(key: string) {
+  const segment = key.split("/").pop() ?? key;
+  return segment.replace(/^\d+-/, "");
+}
+
 function toMediaRecord(doc: {
   _id: { toString(): string };
   url: string;
   key: string;
+  name?: string | null;
+  size?: number | null;
   weight: number;
   restaurantId?: { toString(): string } | null;
   userId?: string | null;
   createdAt?: Date;
   updatedAt?: Date;
 }): MediaRecord {
+  const name = doc.name?.trim() || nameFromKey(doc.key);
+
   return {
     id: doc._id.toString(),
     url: doc.url,
     key: doc.key,
+    name,
+    size: typeof doc.size === "number" ? doc.size : null,
     weight: doc.weight,
     restaurantId: doc.restaurantId?.toString() ?? null,
     userId: doc.userId ?? null,
@@ -64,6 +79,8 @@ export async function createMedia(input: CreateMediaInput): Promise<MediaRecord>
     restaurantId: input.restaurantId || null,
     userId: input.userId ?? null,
     weight: input.weight ?? 0,
+    name: input.name?.trim() || nameFromKey(input.key),
+    size: input.size ?? null,
     url: input.url,
     key: input.key,
   });
@@ -88,7 +105,7 @@ export async function listMediaByRestaurantId(
   const [total, docs] = await Promise.all([
     MediaModel.countDocuments(filter),
     MediaModel.find(filter)
-      .sort({ weight: 1, createdAt: -1 })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(pageSize)
       .lean(),

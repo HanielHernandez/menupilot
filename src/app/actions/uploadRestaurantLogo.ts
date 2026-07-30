@@ -1,16 +1,14 @@
 "use server";
 
+import type { MediaRecord } from "@/app/repositories/media.repo";
 import { auth } from "@/lib/auth";
-import { config } from "@/lib/config";
 import { connectDB } from "@/lib/db";
-import { getPublicObjectUrl, getS3Client } from "@/lib/s3";
-import { MediaModel } from "@/models/media.model";
+import { uploadImageAndCreateMedia } from "@/lib/media-upload";
 import { RestaurantModel } from "@/models/restaurant.model";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { headers } from "next/headers";
 
 export type UploadRestaurantLogoResult =
-  | { success: true; mediaId: string; url: string }
+  | { success: true; mediaId: string; url: string; media: MediaRecord }
   | { success: false; error: string };
 
 export async function uploadRestaurantLogoAction(
@@ -40,35 +38,27 @@ export async function uploadRestaurantLogoAction(
     return { success: false, error: "No file provided" };
   }
 
-  if (!file.type.startsWith("image/")) {
-    return { success: false, error: "Logo must be an image" };
+  try {
+    const media = await uploadImageAndCreateMedia({
+      file,
+      restaurantId: restaurant._id,
+      restaurantSlug: restaurant.slug,
+      userId: session.user.id,
+      folder: "logo",
+    });
+
+    return {
+      success: true,
+      mediaId: media.id,
+      url: media.url,
+      media,
+    };
+  } catch (error) {
+    console.error("Failed to upload restaurant logo", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to upload logo",
+    };
   }
-
-  const safeName = file.name.replace(/[/\\]/g, "_");
-  const key = `menupilot/${restaurant.slug}/logo/${Date.now()}-${safeName}`;
-  const s3 = getS3Client();
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: config.r2.bucket,
-      Key: key,
-      Body: Buffer.from(await file.arrayBuffer()),
-      ContentType: file.type || undefined,
-    }),
-  );
-
-  const url = getPublicObjectUrl(key);
-  const media = await MediaModel.create({
-    restaurantId: restaurant._id,
-    userId: session.user.id,
-    weight: 0,
-    url,
-    key,
-  });
-
-  return {
-    success: true,
-    mediaId: media._id.toString(),
-    url,
-  };
 }

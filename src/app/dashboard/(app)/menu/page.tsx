@@ -3,6 +3,7 @@ import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { flattenMenuItems, type ExtractedCategory } from "@/lib/menu-extract";
 import { CategoryModel } from "@/models/category.model";
+import { MediaModel } from "@/models/media.model";
 import { MenuImageModel } from "@/models/menu-image.model";
 import { MenuItemModel } from "@/models/menu-item.model";
 import { RestaurantModel } from "@/models/restaurant.model";
@@ -47,6 +48,21 @@ export default async function MenuPage() {
       .lean(),
   ]);
 
+  const mediaIds = menuImages
+    .map((item) => item.mediaId)
+    .filter(Boolean);
+
+  const mediaDocs = mediaIds.length
+    ? await MediaModel.find({
+        _id: { $in: mediaIds },
+        deletedAt: null,
+      }).lean()
+    : [];
+
+  const mediaById = new Map(
+    mediaDocs.map((doc) => [doc._id.toString(), doc]),
+  );
+
   const initialCategories: ExtractedCategory[] = categories.map(
     (category, index) => ({
       id: category._id.toString(),
@@ -88,12 +104,19 @@ export default async function MenuPage() {
       <MenuWorkspace
         key={menuVersion}
         restaurantId={restaurant._id.toString()}
-        menuImages={menuImages.map((item) => ({
-          _id: item._id.toString(),
-          url: item.url,
-          status: item.status,
-          fileName: item.key?.split("/").pop() ?? item.url.split("/").pop(),
-        }))}
+        menuImages={menuImages
+          .map((item) => {
+            const media = mediaById.get(item.mediaId?.toString() ?? "");
+            if (!media?.url) return null;
+            return {
+              _id: item._id.toString(),
+              mediaId: item.mediaId.toString(),
+              url: media.url,
+              status: item.status,
+              fileName: media.name || media.key.split("/").pop() || "menu-image",
+            };
+          })
+          .filter((item): item is NonNullable<typeof item> => item !== null)}
         initialCategories={initialCategories}
         initialMenuItems={initialMenuItems}
       />

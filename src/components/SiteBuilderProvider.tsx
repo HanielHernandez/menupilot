@@ -2,6 +2,7 @@
 
 import {
   DEFAULT_SITE_TEMPLATE,
+  normalizeSiteSettings,
   SITE_BLOCK_TYPES,
   type SiteBlock,
   type SiteTemplate,
@@ -41,7 +42,14 @@ export const siteBuilderSchema = z.object({
       background: hexColor,
       foreground: hexColor,
     }),
-    fontFamily: z.string().trim().min(1, { message: "Font family is required" }),
+    fonts: z.object({
+      header: z
+        .string()
+        .trim()
+        .min(1, { message: "Header font is required" }),
+      body: z.string().trim().min(1, { message: "Body font is required" }),
+      useHeaderAsBody: z.boolean(),
+    }),
   }),
   media: z.array(
     z.object({
@@ -113,14 +121,7 @@ function buildDefaultValues(
 
   return {
     templateId: initialValues?.templateId ?? "default",
-    settings: {
-      colors: {
-        ...template.settings.colors,
-        ...initialValues?.settings?.colors,
-      },
-      fontFamily:
-        initialValues?.settings?.fontFamily ?? template.settings.fontFamily,
-    },
+    settings: normalizeSiteSettings(initialValues?.settings, template.settings),
     media: initialValues?.media ?? template.media,
     blocks: initialValues?.blocks ?? template.blocks,
   };

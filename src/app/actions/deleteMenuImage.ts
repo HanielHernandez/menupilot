@@ -3,6 +3,7 @@
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { deleteObjectFromR2 } from "@/lib/s3";
+import { MediaModel } from "@/models/media.model";
 import { MenuImageModel } from "@/models/menu-image.model";
 import { RestaurantModel } from "@/models/restaurant.model";
 import { revalidatePath } from "next/cache";
@@ -47,9 +48,16 @@ export async function deleteMenuImageAction(imageId: string) {
     };
   }
 
+  const media = menuImage.mediaId
+    ? await MediaModel.findOne({
+        _id: menuImage.mediaId,
+        deletedAt: null,
+      })
+    : null;
+
   try {
-    if (menuImage.key) {
-      await deleteObjectFromR2(menuImage.key);
+    if (media?.key) {
+      await deleteObjectFromR2(media.key);
     }
   } catch (error) {
     console.error("Failed to delete menu image from R2", error);
@@ -59,10 +67,17 @@ export async function deleteMenuImageAction(imageId: string) {
     };
   }
 
-  menuImage.deletedAt = new Date();
+  const now = new Date();
+  menuImage.deletedAt = now;
   await menuImage.save();
 
+  if (media) {
+    media.deletedAt = now;
+    await media.save();
+  }
+
   revalidatePath("/dashboard/menu");
+  revalidatePath("/dashboard/gallery");
 
   return {
     success: true,

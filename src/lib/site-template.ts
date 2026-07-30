@@ -11,8 +11,115 @@ export type SiteTemplateSettings = {
     background: string;
     foreground: string;
   };
-  fontFamily: string;
+  fonts: {
+    header: string;
+    body: string;
+    useHeaderAsBody: boolean;
+  };
 };
+
+export type TypographyPreset = {
+  id: string;
+  label: string;
+  description: string;
+  header: string;
+  body: string;
+};
+
+export const TYPOGRAPHY_PRESETS: TypographyPreset[] = [
+  {
+    id: "classic-italian",
+    label: "Classic Italian / Fine Dining",
+    description: "Looks elegant and premium.",
+    header: "Playfair Display",
+    body: "Inter",
+  },
+  {
+    id: "modern-restaurant",
+    label: "Modern Restaurant",
+    description: "Clean, contemporary, works for almost any restaurant.",
+    header: "Poppins",
+    body: "Inter",
+  },
+  {
+    id: "steakhouse-grill",
+    label: "Steakhouse / Grill",
+    description: "Strong and bold.",
+    header: "Oswald",
+    body: "Source Sans 3",
+  },
+  {
+    id: "mexican-latin",
+    label: "Mexican / Latin Restaurant",
+    description: "Energetic and eye-catching.",
+    header: "Bebas Neue",
+    body: "Montserrat",
+  },
+  {
+    id: "cafe-bakery",
+    label: "Café / Bakery",
+    description: "Warm and cozy.",
+    header: "Cormorant Garamond",
+    body: "Lato",
+  },
+  {
+    id: "asian-restaurant",
+    label: "Asian Restaurant",
+    description: "Elegant and culturally neutral.",
+    header: "Noto Serif",
+    body: "Noto Sans",
+  },
+  {
+    id: "fast-food",
+    label: "Fast Food / Food Truck",
+    description: "Bold and easy to read.",
+    header: "Barlow Condensed",
+    body: "Barlow",
+  },
+  {
+    id: "premium-modern",
+    label: "Premium Modern",
+    description: "One of the most modern premium combinations.",
+    header: "DM Serif Display",
+    body: "Manrope",
+  },
+];
+
+export const FONT_OPTIONS = Array.from(
+  new Set(TYPOGRAPHY_PRESETS.flatMap((preset) => [preset.header, preset.body])),
+).sort((a, b) => a.localeCompare(b));
+
+export function findTypographyPreset(
+  header: string,
+  body: string,
+  useHeaderAsBody = false,
+): TypographyPreset | undefined {
+  const resolvedBody = useHeaderAsBody ? header : body;
+  return TYPOGRAPHY_PRESETS.find(
+    (preset) =>
+      preset.header === header &&
+      preset.body === resolvedBody,
+  );
+}
+
+/** Google Fonts CSS URL for the given family names. */
+export function getGoogleFontsStylesheetUrl(families: string[]) {
+  const unique = Array.from(
+    new Set(
+      families
+        .map((family) => family.trim())
+        .filter((family) => family && family !== "system-ui" && family !== "Georgia"),
+    ),
+  );
+
+  if (!unique.length) return null;
+
+  const query = unique
+    .map((family) => `family=${encodeURIComponent(family).replace(/%20/g, "+")}:wght@400;500;600;700`)
+    .join("&");
+
+  return `https://fonts.googleapis.com/css2?${query}&display=swap`;
+}
 
 export const SITE_BLOCK_TYPES = [
   "navbar",
@@ -93,10 +200,13 @@ export const DEFAULT_SITE_TEMPLATE: SiteTemplate = {
       background: "#faf8f5",
       foreground: "#1f1c18",
     },
-    fontFamily: "Plus Jakarta Sans",
+    fonts: {
+      header: "Playfair Display",
+      body: "Inter",
+      useHeaderAsBody: false,
+    },
   },
-  media: [
-    {
+  media: [    {
       id: "media-hero",
       url: "https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1600&q=80",
     },
@@ -167,4 +277,50 @@ export function resolveMediaUrl(
 ): string | null {
   if (!mediaId) return null;
   return media.find((item) => item.id === mediaId)?.url ?? null;
+}
+
+export function resolveSiteFonts(settings: SiteTemplateSettings) {
+  const header = settings.fonts.header.trim() || "Plus Jakarta Sans";
+  const body = settings.fonts.useHeaderAsBody
+    ? header
+    : settings.fonts.body.trim() || header;
+  return { header, body };
+}
+
+/** Normalize legacy single-font settings into header/body fonts. */
+export function normalizeSiteSettings(
+  settings: Partial<SiteTemplateSettings> & {
+    fontFamily?: string;
+  } = {},
+  fallback: SiteTemplateSettings = DEFAULT_SITE_TEMPLATE.settings,
+): SiteTemplateSettings {
+  const legacyFont =
+    typeof settings.fontFamily === "string" && settings.fontFamily.trim()
+      ? settings.fontFamily.trim()
+      : null;
+
+  const fonts = settings.fonts;
+
+  return {
+    colors: {
+      ...fallback.colors,
+      ...settings.colors,
+    },
+    fonts: {
+      header:
+        fonts?.header?.trim() ||
+        legacyFont ||
+        fallback.fonts.header,
+      body:
+        fonts?.body?.trim() ||
+        legacyFont ||
+        fallback.fonts.body,
+      useHeaderAsBody:
+        typeof fonts?.useHeaderAsBody === "boolean"
+          ? fonts.useHeaderAsBody
+          : legacyFont
+            ? true
+            : fallback.fonts.useHeaderAsBody,
+    },
+  };
 }

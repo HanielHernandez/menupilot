@@ -9,6 +9,7 @@ import {
   type ExtractedMenu,
 } from "@/lib/menu-extract";
 import { extractMenuFromImage } from "@/lib/openai";
+import { MediaModel } from "@/models/media.model";
 import { MenuImageModel } from "@/models/menu-image.model";
 import { RestaurantModel } from "@/models/restaurant.model";
 import mongoose from "mongoose";
@@ -89,18 +90,40 @@ export async function processMenuImagesAction(
     };
   }
 
+  const mediaIds = uploadedImages
+    .map((image) => image.mediaId)
+    .filter(Boolean);
+
+  const mediaDocs = await MediaModel.find({
+    _id: { $in: mediaIds },
+    deletedAt: null,
+  }).lean();
+
+  const mediaById = new Map(
+    mediaDocs.map((doc) => [doc._id.toString(), doc]),
+  );
+
   let menu = createEmptyExtractedMenu();
   const errors: string[] = [];
   let processedCount = 0;
 
   for (const image of uploadedImages) {
+    const media = mediaById.get(image.mediaId.toString());
+    const imageUrl = media?.url;
+    const label = media?.name || media?.key || image._id.toString();
+
+    if (!imageUrl) {
+      errors.push(`Missing media for menu image ${image._id}`);
+      continue;
+    }
+
     await MenuImageModel.findByIdAndUpdate(image._id, {
       status: "processing",
     });
     revalidatePath("/dashboard/menu");
 
     try {
-      const raw = await extractMenuFromImage(image.url);
+      const raw = await extractMenuFromImage(imageUrl);
       const extracted = parseExtractedMenu(raw);
       menu = mergeExtractedMenus(menu, extracted);
 
@@ -111,7 +134,7 @@ export async function processMenuImagesAction(
     } catch (error) {
       console.error("Failed to extract menu from image", image._id, error);
       errors.push(
-        `Failed to process ${image.key || image.url}: ${
+        `Failed to process ${label}: ${
           error instanceof Error ? error.message : "Unknown error"
         }`,
       );

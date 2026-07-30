@@ -27,7 +27,14 @@ const saveSiteSchema = z.object({
       background: hexColor,
       foreground: hexColor,
     }),
-    fontFamily: z.string().trim().min(1, { message: "Font family is required" }),
+    fonts: z.object({
+      header: z
+        .string()
+        .trim()
+        .min(1, { message: "Header font is required" }),
+      body: z.string().trim().min(1, { message: "Body font is required" }),
+      useHeaderAsBody: z.boolean(),
+    }),
   }),
   media: z.array(
     z.object({

@@ -19,8 +19,16 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
+import { Switch } from "@/components/ui/switch";
+import {
+  FONT_OPTIONS,
+  TYPOGRAPHY_PRESETS,
+  findTypographyPreset,
+} from "@/lib/site-template";
+import { cn } from "@/lib/utils";
 import { PlusIcon, SaveIcon, Trash2Icon } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import {
@@ -37,16 +45,6 @@ const COLOR_FIELDS = [
   { name: "accent", label: "Accent" },
   { name: "background", label: "Background" },
   { name: "foreground", label: "Foreground" },
-] as const;
-
-const FONT_OPTIONS = [
-  "Plus Jakarta Sans",
-  "Inter",
-  "DM Sans",
-  "Geist",
-  "Playfair Display",
-  "Georgia",
-  "system-ui",
 ] as const;
 
 function ColorField({
@@ -121,6 +119,25 @@ export default function SiteForm() {
   });
 
   const mediaItems = useWatch({ control, name: "media" }) ?? [];
+  const useHeaderAsBody = Boolean(
+    useWatch({ control, name: "settings.fonts.useHeaderAsBody" }),
+  );
+  const headerFont =
+    useWatch({ control, name: "settings.fonts.header" }) ?? "";
+  const bodyFont = useWatch({ control, name: "settings.fonts.body" }) ?? "";
+  const activePreset = findTypographyPreset(
+    headerFont,
+    bodyFont,
+    useHeaderAsBody,
+  );
+
+  const applyTypographyPreset = (presetId: string) => {
+    const preset = TYPOGRAPHY_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    setValue("settings.fonts.header", preset.header, { shouldDirty: true });
+    setValue("settings.fonts.body", preset.body, { shouldDirty: true });
+    setValue("settings.fonts.useHeaderAsBody", false, { shouldDirty: true });
+  };
 
   const handleAddMedia = (items: MediaSelectorItem[]) => {
     for (const item of items) {
@@ -185,33 +202,121 @@ export default function SiteForm() {
 
           <FormSection
             title="Typography"
-            description="Choose the font family for your site."
+            description="Pick a preset pairing, or customize header and body fonts."
           >
-            <Controller
-              control={control}
-              name="settings.fontFamily"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <FieldLabel>Font family</FieldLabel>
-                  <Input
-                    list="site-font-options"
-                    placeholder="Plus Jakarta Sans"
-                    value={field.value}
-                    onChange={field.onChange}
-                    aria-invalid={Boolean(fieldState.error)}
-                    style={{ fontFamily: field.value }}
-                  />
-                  <datalist id="site-font-options">
-                    {FONT_OPTIONS.map((font) => (
-                      <option key={font} value={font} />
-                    ))}
-                  </datalist>
-                  {fieldState.error ? (
-                    <FieldError>{fieldState.error.message}</FieldError>
-                  ) : null}
-                </Field>
-              )}
-            />
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {TYPOGRAPHY_PRESETS.map((preset) => {
+                  const isActive = activePreset?.id === preset.id;
+                  return (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => applyTypographyPreset(preset.id)}
+                      className={cn(
+                        "rounded-xl border p-3 text-left transition-colors outline-none",
+                        "hover:bg-muted/40 focus-visible:ring-3 focus-visible:ring-ring/50",
+                        isActive
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                          : "border-border",
+                      )}
+                    >
+                      <p
+                        className="text-sm font-semibold tracking-tight"
+                        style={{ fontFamily: preset.header }}
+                      >
+                        {preset.label}
+                      </p>
+                      <p
+                        className="text-muted-foreground mt-1 text-xs"
+                        style={{ fontFamily: preset.body }}
+                      >
+                        {preset.header} · {preset.body}
+                      </p>
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {preset.description}
+                      </p>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <Controller
+                control={control}
+                name="settings.fonts.header"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel>Header font</FieldLabel>
+                    <Input
+                      list="site-header-font-options"
+                      placeholder="Playfair Display"
+                      value={field.value}
+                      onChange={field.onChange}
+                      aria-invalid={Boolean(fieldState.error)}
+                      style={{ fontFamily: field.value }}
+                    />
+                    <datalist id="site-header-font-options">
+                      {FONT_OPTIONS.map((font) => (
+                        <option key={font} value={font} />
+                      ))}
+                    </datalist>
+                    {fieldState.error ? (
+                      <FieldError>{fieldState.error.message}</FieldError>
+                    ) : null}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="settings.fonts.useHeaderAsBody"
+                render={({ field }) => (
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={(checked) => {
+                        field.onChange(checked);
+                        if (checked && headerFont) {
+                          setValue("settings.fonts.body", headerFont, {
+                            shouldDirty: true,
+                          });
+                        }
+                      }}
+                    />
+                    <Label>Use header font for body text</Label>
+                  </div>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="settings.fonts.body"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel>Body font</FieldLabel>
+                    <Input
+                      list="site-body-font-options"
+                      placeholder="Inter"
+                      value={useHeaderAsBody ? headerFont : field.value}
+                      onChange={field.onChange}
+                      disabled={useHeaderAsBody}
+                      aria-invalid={Boolean(fieldState.error)}
+                      style={{
+                        fontFamily: useHeaderAsBody ? headerFont : field.value,
+                      }}
+                    />
+                    <datalist id="site-body-font-options">
+                      {FONT_OPTIONS.map((font) => (
+                        <option key={font} value={font} />
+                      ))}
+                    </datalist>
+                    {fieldState.error ? (
+                      <FieldError>{fieldState.error.message}</FieldError>
+                    ) : null}
+                  </Field>
+                )}
+              />
+            </div>
           </FormSection>
 
           <Separator />

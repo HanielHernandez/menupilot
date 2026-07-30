@@ -1,15 +1,16 @@
 import { connectDB } from "@/lib/db";
 import {
+  normalizeSiteSettings,
+  type SiteBlock,
+  type SiteTemplate,
+  type SiteTemplateMedia,
+  type SiteTemplateSettings,
+} from "@/lib/site-template";
+import {
   cloneDefaultSiteTemplate,
   SiteModel,
   type Site,
 } from "@/models/site.model";
-import type {
-  SiteBlock,
-  SiteTemplate,
-  SiteTemplateMedia,
-  SiteTemplateSettings,
-} from "@/lib/site-template";
 import mongoose from "mongoose";
 
 export type UpsertSiteInput = {
@@ -29,7 +30,7 @@ type LegacySiteDoc = Partial<SiteRecord> & {
   restaurantId: mongoose.Types.ObjectId | string;
   colors?: SiteTemplateSettings["colors"];
   fontFamily?: string;
-  settings?: SiteTemplateSettings;
+  settings?: Partial<SiteTemplateSettings> & { fontFamily?: string };
   media?: SiteTemplateMedia[];
   blocks?: SiteBlock[];
   templateId?: string;
@@ -38,8 +39,9 @@ type LegacySiteDoc = Partial<SiteRecord> & {
 function isCompleteSite(site: LegacySiteDoc | null): site is SiteRecord {
   return Boolean(
     site?.settings?.colors &&
-      typeof site.settings.fontFamily === "string" &&
-      site.settings.fontFamily.length > 0 &&
+      site.settings.fonts?.header &&
+      site.settings.fonts?.body &&
+      typeof site.settings.fonts.useHeaderAsBody === "boolean" &&
       Array.isArray(site.media) &&
       Array.isArray(site.blocks),
   );
@@ -65,26 +67,29 @@ export async function getOrCreateSiteForRestaurant(
   }
 
   const template = cloneDefaultSiteTemplate();
-  const settings: SiteTemplateSettings = {
-    colors: { ...template.settings.colors },
-    fontFamily: template.settings.fontFamily,
-  };
+  const settings = normalizeSiteSettings(
+    {
+      ...(existing?.settings ?? {}),
+      ...(existing?.colors ? { colors: existing.colors } : {}),
+      ...(existing?.fontFamily ? { fontFamily: existing.fontFamily } : {}),
+      ...(existing?.settings?.fontFamily
+        ? { fontFamily: existing.settings.fontFamily }
+        : {}),
+    },
+    template.settings,
+  );
 
   const media =
-    existing?.media?.length && existing.media.every((item) => item?.id && item?.url)
+    existing?.media?.length &&
+    existing.media.every((item) => item?.id && item?.url)
       ? existing.media
       : template.media;
 
   const blocks =
-    existing?.blocks?.length && existing.blocks.every((item) => item?.id && item?.type)
+    existing?.blocks?.length &&
+    existing.blocks.every((item) => item?.id && item?.type)
       ? existing.blocks
       : template.blocks;
-
-  // Prefer legacy root colors if present while migrating.
-  if (existing?.colors && existing.fontFamily) {
-    settings.colors = { ...existing.colors };
-    settings.fontFamily = existing.fontFamily;
-  }
 
   const updated = await SiteModel.findOneAndUpdate(
     {
@@ -101,6 +106,7 @@ export async function getOrCreateSiteForRestaurant(
       $unset: {
         colors: 1,
         fontFamily: 1,
+        "settings.fontFamily": 1,
       },
       $setOnInsert: {
         restaurantId,
@@ -133,7 +139,7 @@ export async function upsertSite(input: UpsertSiteInput) {
     {
       $set: {
         templateId: input.templateId ?? "default",
-        settings: input.settings,
+        settings: normalizeSiteSettings(input.settings),
         media: input.media.map((item) => ({
           id: item.id.trim(),
           url: item.url.trim(),
@@ -143,6 +149,7 @@ export async function upsertSite(input: UpsertSiteInput) {
       $unset: {
         colors: 1,
         fontFamily: 1,
+        "settings.fontFamily": 1,
       },
       $setOnInsert: {
         restaurantId: input.restaurantId,
@@ -161,7 +168,7 @@ export async function upsertSite(input: UpsertSiteInput) {
 
 export function toSiteTemplate(site: SiteRecord): SiteTemplate {
   return {
-    settings: site.settings,
+    settings: normalizeSiteSettings(site.settings),
     media: site.media ?? [],
     blocks: (site.blocks ?? []) as SiteBlock[],
   };

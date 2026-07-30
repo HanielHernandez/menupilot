@@ -25,6 +25,7 @@ import type { User } from "better-auth";
 import {
   ChevronsUpDownIcon,
   Globe2Icon,
+  ImagesIcon,
   LayoutDashboardIcon,
   LogOutIcon,
   StoreIcon,
@@ -54,6 +55,11 @@ const navigation = [
     title: "Categories",
     href: "/dashboard/categories",
     icon: TagsIcon,
+  },
+  {
+    title: "Gallery",
+    href: "/dashboard/gallery",
+    icon: ImagesIcon,
   },
   {
     title: "Site",

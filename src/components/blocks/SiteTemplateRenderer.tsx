@@ -7,11 +7,14 @@ import MenuBlockView from "@/components/blocks/MenuBlock";
 import NavbarBlockView from "@/components/blocks/NavbarBlock";
 import type { SiteBuilderRestaurant } from "@/components/SiteBuilderProvider";
 import {
+  getGoogleFontsStylesheetUrl,
   resolveMediaUrl,
+  resolveSiteFonts,
   type SiteBlock,
   type SiteTemplateMedia,
   type SiteTemplateSettings,
 } from "@/lib/site-template";
+import type { CSSProperties } from "react";
 
 type SiteTemplateRendererProps = {
   blocks: SiteBlock[];
@@ -27,16 +30,30 @@ export default function SiteTemplateRenderer({
   restaurant,
 }: SiteTemplateRendererProps) {
   const { colors } = settings;
+  const fonts = resolveSiteFonts(settings);
+  const googleFontsUrl = getGoogleFontsStylesheetUrl([
+    fonts.header,
+    fonts.body,
+  ]);
 
   return (
-    <div
-      className="overflow-hidden rounded-xl border border-border"
-      style={{
-        backgroundColor: colors.background,
-        color: colors.foreground,
-        fontFamily: settings.fontFamily,
-      }}
-    >
+    <>
+      {googleFontsUrl ? (
+        // eslint-disable-next-line @next/next/no-page-custom-font
+        <link rel="stylesheet" href={googleFontsUrl} />
+      ) : null}
+      <div
+        className="overflow-hidden rounded-xl border border-border [&_h1]:[font-family:var(--site-header-font)] [&_h2]:[font-family:var(--site-header-font)] [&_h3]:[font-family:var(--site-header-font)]"
+        style={
+          {
+            backgroundColor: colors.background,
+            color: colors.foreground,
+            fontFamily: fonts.body,
+            ["--site-header-font" as string]: fonts.header,
+            ["--site-body-font" as string]: fonts.body,
+          } as CSSProperties
+        }
+      >
       {blocks.map((block) => {
         switch (block.type) {
           case "navbar":
@@ -118,6 +135,7 @@ export default function SiteTemplateRenderer({
             return null;
         }
       })}
-    </div>
+      </div>
+    </>
   );
 }

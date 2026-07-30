@@ -1,17 +1,14 @@
 "use server";
 
 import {
-  createMedia,
   listMediaByRestaurantId,
   type ListMediaResult,
   type MediaRecord,
 } from "@/app/repositories/media.repo";
 import { auth } from "@/lib/auth";
-import { config } from "@/lib/config";
 import { connectDB } from "@/lib/db";
-import { getPublicObjectUrl, getS3Client } from "@/lib/s3";
+import { uploadImageAndCreateMedia } from "@/lib/media-upload";
 import { RestaurantModel } from "@/models/restaurant.model";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { headers } from "next/headers";
 
 export type ListMediaActionResult =
@@ -77,31 +74,22 @@ export async function uploadMediaAction(
     return { success: false, error: "No file provided" };
   }
 
-  if (!file.type.startsWith("image/")) {
-    return { success: false, error: "File must be an image" };
+  try {
+    const media = await uploadImageAndCreateMedia({
+      file,
+      restaurantId: restaurant._id,
+      restaurantSlug: restaurant.slug,
+      userId: session.user.id,
+      folder: "media",
+    });
+
+    return { success: true, media };
+  } catch (error) {
+    console.error("Failed to upload media", error);
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : "Failed to upload media",
+    };
   }
-
-  const safeName = file.name.replace(/[/\\]/g, "_");
-  const key = `menupilot/${restaurant.slug}/media/${Date.now()}-${safeName}`;
-  const s3 = getS3Client();
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: config.r2.bucket,
-      Key: key,
-      Body: Buffer.from(await file.arrayBuffer()),
-      ContentType: file.type || undefined,
-    }),
-  );
-
-  const url = getPublicObjectUrl(key);
-  const media = await createMedia({
-    restaurantId: restaurant._id,
-    userId: session.user.id,
-    weight: 0,
-    url,
-    key,
-  });
-
-  return { success: true, media };
 }

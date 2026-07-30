@@ -10,7 +10,7 @@ import mongoose, { InferSchemaType, Schema } from "mongoose";
 
 export { SITE_BLOCK_TYPES };
 
-const SiteColorsSchema = new Schema(
+export const SiteColorsSchema = new Schema(
   {
     primary: { type: String, required: true, trim: true },
     secondary: { type: String, required: true, trim: true },
@@ -21,15 +21,24 @@ const SiteColorsSchema = new Schema(
   { _id: false },
 );
 
-const SiteSettingsSchema = new Schema(
+export const SiteFontsSchema = new Schema(
   {
-    colors: { type: SiteColorsSchema, required: true },
-    fontFamily: { type: String, required: true, trim: true },
+    header: { type: String, required: true, trim: true },
+    body: { type: String, required: true, trim: true },
+    useHeaderAsBody: { type: Boolean, required: true, default: false },
   },
   { _id: false },
 );
 
-const SiteMediaSchema = new Schema(
+export const SiteSettingsSchema = new Schema(
+  {
+    colors: { type: SiteColorsSchema, required: true },
+    fonts: { type: SiteFontsSchema, required: true },
+  },
+  { _id: false },
+);
+
+export const SiteMediaSchema = new Schema(
   {
     id: { type: String, required: true, trim: true },
     url: { type: String, required: true, trim: true },
@@ -38,7 +47,7 @@ const SiteMediaSchema = new Schema(
 );
 
 /** Discriminated block payload; extra fields vary by `type`. */
-const SiteBlockSchema = new Schema(
+export const SiteBlockSchema = new Schema(
   {
     id: { type: String, required: true, trim: true },
     type: {
@@ -86,6 +95,19 @@ const SiteSchema = new Schema(
       default: [],
     },
 
+    /** When this published snapshot was last pushed live. Null = never published. */
+    publishedAt: {
+      type: Date,
+      default: null,
+      index: true,
+    },
+
+    /** Draft `updatedAt` that was published into this snapshot (for sync UI). */
+    publishedFromDraftUpdatedAt: {
+      type: Date,
+      default: null,
+    },
+
     deletedAt: {
       type: Date,
       default: null,
@@ -108,7 +130,7 @@ export type { SiteBlock, SiteTemplate };
 
 /**
  * Use a fresh model name so Turbopack/dev can't keep a stale `Site` schema
- * (old top-level colors/fontFamily) while still writing to the `sites` collection.
+ * while still writing to the `sites` collection.
  */
 const SITE_MODEL_NAME = "RestaurantSite";
 const SITE_COLLECTION = "sites";

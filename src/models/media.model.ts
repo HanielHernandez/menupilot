@@ -23,6 +23,17 @@ const MediaSchema = new Schema(
       index: true,
     },
 
+    name: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+
+    size: {
+      type: Number,
+      default: null,
+    },
+
     url: {
       type: String,
       required: true,

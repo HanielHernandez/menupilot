@@ -1,12 +1,10 @@
 "use server";
 
 import { auth } from "@/lib/auth";
-import { config } from "@/lib/config";
 import { connectDB } from "@/lib/db";
-import { getPublicObjectUrl, getS3Client } from "@/lib/s3";
+import { uploadImageAndCreateMedia } from "@/lib/media-upload";
 import { MenuImageModel } from "@/models/menu-image.model";
 import { RestaurantModel as Restaurant } from "@/models/restaurant.model";
-import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 
@@ -39,8 +37,8 @@ export default async function uploadMenuFile(formData: FormData) {
   const files = formData.getAll("files") as File[];
   const uploaded: Array<{
     _id: string;
+    mediaId: string;
     url: string;
-    key: string;
     status: string;
     restaurantId: string;
     deletedAt: string | null;
@@ -50,35 +48,53 @@ export default async function uploadMenuFile(formData: FormData) {
   }> = [];
 
   for (const file of files) {
-    const { url, key } = await uploadFileToR2(file, restaurant.slug);
+    if (!(file instanceof File) || file.size === 0) continue;
 
-    const menuImage = await MenuImageModel.create({
-      url,
-      key,
-      status: "uploaded",
-      restaurantId: restaurant._id,
-    });
+    try {
+      const media = await uploadImageAndCreateMedia({
+        file,
+        restaurantId: restaurant._id,
+        restaurantSlug: restaurant.slug,
+        userId: session.user.id,
+        folder: "menu",
+      });
 
-    const plain = menuImage.toObject();
+      const menuImage = await MenuImageModel.create({
+        mediaId: media.id,
+        status: "uploaded",
+        restaurantId: restaurant._id,
+      });
 
-    uploaded.push({
-      _id: plain._id?.toString?.() ?? String(plain._id),
-      url: plain.url,
-      key: plain.key,
-      status: plain.status,
-      restaurantId:
-        plain.restaurantId?.toString?.() ?? String(plain.restaurantId),
-      deletedAt: plain.deletedAt
-        ? new Date(plain.deletedAt).toISOString()
-        : null,
-      createdAt: plain.createdAt
-        ? new Date(plain.createdAt).toISOString()
-        : null,
-      updatedAt: plain.updatedAt
-        ? new Date(plain.updatedAt).toISOString()
-        : null,
-      fileName: file.name,
-    });
+      const plain = menuImage.toObject();
+
+      uploaded.push({
+        _id: plain._id?.toString?.() ?? String(plain._id),
+        mediaId: media.id,
+        url: media.url,
+        status: plain.status,
+        restaurantId:
+          plain.restaurantId?.toString?.() ?? String(plain.restaurantId),
+        deletedAt: plain.deletedAt
+          ? new Date(plain.deletedAt).toISOString()
+          : null,
+        createdAt: plain.createdAt
+          ? new Date(plain.createdAt).toISOString()
+          : null,
+        updatedAt: plain.updatedAt
+          ? new Date(plain.updatedAt).toISOString()
+          : null,
+        fileName: media.name || file.name,
+      });
+    } catch (error) {
+      console.error("Failed to upload menu file", error);
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Failed to upload menu file",
+      };
+    }
   }
 
   revalidatePath("/dashboard/menu");
@@ -88,23 +104,3 @@ export default async function uploadMenuFile(formData: FormData) {
     files: uploaded,
   };
 }
-
-const uploadFileToR2 = async (file: File, restaurantSlug: string) => {
-  const s3 = getS3Client();
-  const safeName = file.name.replace(/[/\\]/g, "_");
-  const key = `menupilot/${restaurantSlug}/${safeName}`;
-
-  await s3.send(
-    new PutObjectCommand({
-      Bucket: config.r2.bucket,
-      Key: key,
-      Body: Buffer.from(await file.arrayBuffer()),
-      ContentType: file.type || undefined,
-    }),
-  );
-
-  return {
-    key,
-    url: getPublicObjectUrl(key),
-  };
-};
