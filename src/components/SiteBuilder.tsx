@@ -16,7 +16,8 @@ import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { SiteTemplate } from "@/lib/site-template";
 import { cn } from "@/lib/utils";
-import { GlobeIcon, SaveIcon } from "lucide-react";
+import { ExternalLinkIcon, GlobeIcon, SaveIcon } from "lucide-react";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
 import { toast } from "sonner";
@@ -58,11 +59,13 @@ function SiteToolbar({
   status: SitePublishStatus;
   onStatusChange: (status: SitePublishStatus) => void;
 }) {
-  const { restaurantId } = useSiteBuilder();
+  const { restaurantId, restaurant } = useSiteBuilder();
   const { handleSubmit } = useFormContext<SiteBuilderValues>();
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const isBusy = isSaving || isPublishing;
+  const isPublished = status.status === "published";
+  const publicSiteHref = `/site/${restaurant.slug}`;
 
   const onSave = handleSubmit(async (values) => {
     setIsSaving(true);
@@ -118,6 +121,22 @@ function SiteToolbar({
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
+        {isPublished ? (
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <Link
+                href={publicSiteHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+          >
+            <ExternalLinkIcon className="size-4" />
+            Preview
+          </Button>
+        ) : null}
         <Button
           type="button"
           variant="outline"

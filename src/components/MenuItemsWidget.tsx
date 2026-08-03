@@ -41,7 +41,11 @@ export default function MenuItemsWidget({
             Latest items from your restaurant menu
           </p>
         </div>
-        <Button size="sm" render={<Link href="/dashboard/menu" />}>
+        <Button
+          size="sm"
+          nativeButton={false}
+          render={<Link href="/dashboard/menu" />}
+        >
           See full menu
         </Button>
       </CardHeader>

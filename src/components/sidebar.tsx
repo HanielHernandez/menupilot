@@ -29,7 +29,6 @@ import {
   LayoutDashboardIcon,
   LogOutIcon,
   StoreIcon,
-  TagsIcon,
   UtensilsIcon,
 } from "lucide-react";
 import Link from "next/link";
@@ -50,11 +49,6 @@ const navigation = [
     title: "Menu",
     href: "/dashboard/menu",
     icon: UtensilsIcon,
-  },
-  {
-    title: "Categories",
-    href: "/dashboard/categories",
-    icon: TagsIcon,
   },
   {
     title: "Gallery",

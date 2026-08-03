@@ -228,7 +228,11 @@ export default function OnboardingWizard() {
               </span>
             </p>
           ) : null}
-          <Button size="lg" render={<Link href="/dashboard" />}>
+          <Button
+            size="lg"
+            nativeButton={false}
+            render={<Link href="/dashboard" />}
+          >
             Go to dashboard
           </Button>
         </div>

@@ -8,16 +8,19 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Restaurant } from "@/models/restaurant.model";
-import { Edit } from "lucide-react";
+import { Edit, ExternalLinkIcon } from "lucide-react";
+import Link from "next/link";
 
 interface ResturantDetailsProps {
-  restaurant: Restaurant & { logoUrl?: string };
+  restaurant: Restaurant & { logoUrl?: string; slug: string };
   className?: string;
+  isPublished?: boolean;
 }
 
 export default function ResturantDetails({
   restaurant,
   className,
+  isPublished = false,
 }: ResturantDetailsProps) {
   const logo = restaurant.logoUrl?.trim();
   const avatarUrl =
@@ -50,8 +53,29 @@ export default function ResturantDetails({
         </div>
       </CardContent>
       <CardFooter className="flex justify-end gap-2">
-        <Button variant="outline">
+        {isPublished && restaurant.slug ? (
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <Link
+                href={`/site/${restaurant.slug}`}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+          >
+            <ExternalLinkIcon className="size-4" />
+            View site
+          </Button>
+        ) : null}
+        <Button
+          variant="outline"
+          nativeButton={false}
+          render={<Link href="/dashboard/restaurant" />}
+        >
           <Edit size={20} />
+          Edit
         </Button>
       </CardFooter>
     </Card>

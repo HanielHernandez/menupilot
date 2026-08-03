@@ -1,13 +1,13 @@
+import { findPublishedSiteByRestaurantId } from "@/app/repositories/site.repo";
 import MenuItemsWidget from "@/components/MenuItemsWidget";
 import ResturantDetails from "@/components/ResturantDetails";
+import WebsiteStatusWidget from "@/components/WebsiteStatusWidget";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { CategoryModel } from "@/models/category.model";
 import { MediaModel } from "@/models/media.model";
 import { MenuItemModel } from "@/models/menu-item.model";
-import {
-  RestaurantModel as Restaurant,
-} from "@/models/restaurant.model";
+import { RestaurantModel as Restaurant } from "@/models/restaurant.model";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
@@ -31,7 +31,7 @@ export default async function DashboardPage() {
     redirect("/dashboard/onboarding");
   }
 
-  const [menuItems, categories, logoMedia] = await Promise.all([
+  const [menuItems, categories, logoMedia, publishedSite] = await Promise.all([
     MenuItemModel.find({
       restaurantId: restaurant._id,
       deletedAt: null,
@@ -49,6 +49,7 @@ export default async function DashboardPage() {
           deletedAt: null,
         }).lean()
       : Promise.resolve(null),
+    findPublishedSiteByRestaurantId(restaurant._id.toString()),
   ]);
 
   const categoryNameById = new Map(
@@ -75,23 +76,27 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-4 md:flex-row h-full lg:max-h-96 justify-center items-start ">
+      <div className="flex h-full flex-col w-full gap-4 lg:flex-row lg:items-stretch lg:max-h-96">
         <ResturantDetails
           restaurant={{
             ...restaurant,
+            slug: restaurant.slug,
             logoUrl: logoMedia?.url ?? "",
           }}
-          className="w-full h-full md:w-1/2 lg:w-1/3"
+          isPublished={Boolean(publishedSite?.publishedAt)}
+          className="h-full w-full lg:w-1/3"
         />
         <MenuItemsWidget
           items={widgetItems}
-          className="w-full md:w-1/2 h-full "
+          className="h-full w-full lg:w-2/3"
         />
       </div>
-      <div className="flex flex-col gap-4 md:flex-row flex-wrap">
-        <h2 className="text-foreground text-2xl font-bold tracking-tight">
-          Your Restaurant
-        </h2>
+      <div className="flex flex-col gap-4 md:flex-row">
+        <WebsiteStatusWidget
+          slug={restaurant.slug}
+          publishedAt={publishedSite?.publishedAt ?? null}
+          className="h-full w-full lg:w-1/3"
+        />
       </div>
     </div>
   );
