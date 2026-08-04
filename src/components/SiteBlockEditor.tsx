@@ -11,10 +11,16 @@ import {
 } from "@/components/ui/card";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import type { SiteBlock } from "@/lib/site-template";
-import { ChevronLeftIcon, ChevronRightIcon, PanelsRightBottomIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  PanelsRightBottomIcon,
+} from "lucide-react";
 import { useState } from "react";
 import {
   Controller,
@@ -23,6 +29,9 @@ import {
   useWatch,
   type Path,
 } from "react-hook-form";
+
+const selectClassName =
+  "h-8 w-full min-w-0 rounded-lg border border-input bg-transparent px-2.5 py-1 text-sm transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
 function blockHasTitle(
   block: SiteBlock,
@@ -79,7 +88,7 @@ export default function SiteBlockEditor({ className }: SiteBlockEditorProps) {
         <div className="flex flex-col gap-1">
           <CardTitle>Blocks</CardTitle>
           <CardDescription>
-            Edit section titles and descriptions.
+            Edit section content and menu display options.
           </CardDescription>
         </div>
         <Button
@@ -192,6 +201,73 @@ export default function SiteBlockEditor({ className }: SiteBlockEditorProps) {
                       </Field>
                     )}
                   />
+                ) : null}
+
+                {block.type === "menu" ? (
+                  <>
+                    <Controller
+                      control={control}
+                      name={
+                        `blocks.${index}.layout` as Path<SiteBuilderValues>
+                      }
+                      render={({ field }) => (
+                        <Field>
+                          <FieldLabel>Display</FieldLabel>
+                          <select
+                            className={selectClassName}
+                            value={
+                              field.value === "tabs" ? "tabs" : "list"
+                            }
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          >
+                            <option value="list">Stacked lists</option>
+                            <option value="tabs">Category tabs</option>
+                          </select>
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name={
+                        `blocks.${index}.columns` as Path<SiteBuilderValues>
+                      }
+                      render={({ field }) => (
+                        <Field>
+                          <FieldLabel>Columns</FieldLabel>
+                          <select
+                            className={selectClassName}
+                            value={Number(field.value) === 2 ? 2 : 1}
+                            onChange={(event) =>
+                              field.onChange(Number(event.target.value))
+                            }
+                          >
+                            <option value={1}>One column</option>
+                            <option value={2}>Two columns</option>
+                          </select>
+                        </Field>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name={
+                        `blocks.${index}.boldItems` as Path<SiteBuilderValues>
+                      }
+                      render={({ field }) => (
+                        <div className="flex items-center justify-between gap-3">
+                          <Label htmlFor={`menu-bold-${index}`}>
+                            Bold item names
+                          </Label>
+                          <Switch
+                            id={`menu-bold-${index}`}
+                            checked={Boolean(field.value)}
+                            onCheckedChange={field.onChange}
+                          />
+                        </div>
+                      )}
+                    />
+                  </>
                 ) : null}
 
                 {block.type === "navbar" ? (

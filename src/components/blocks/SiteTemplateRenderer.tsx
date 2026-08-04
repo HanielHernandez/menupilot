@@ -9,6 +9,7 @@ import type { SiteBuilderRestaurant } from "@/components/SiteBuilderProvider";
 import type { ExtractedCategory } from "@/lib/menu-extract";
 import {
   getGoogleFontsStylesheetUrl,
+  resolveCornerRadiusCss,
   resolveMediaUrl,
   resolveSiteFonts,
   type SiteBlock,
@@ -39,6 +40,7 @@ export default function SiteTemplateRenderer({
 }: SiteTemplateRendererProps) {
   const { colors } = settings;
   const fonts = resolveSiteFonts(settings);
+  const cornerRadius = resolveCornerRadiusCss(settings.cornerRadius);
   const googleFontsUrl = getGoogleFontsStylesheetUrl([
     fonts.header,
     fonts.body,
@@ -68,6 +70,7 @@ export default function SiteTemplateRenderer({
             fontFamily: fonts.body,
             ["--site-header-font" as string]: fonts.header,
             ["--site-body-font" as string]: fonts.body,
+            ["--site-radius" as string]: cornerRadius,
           } as CSSProperties
         }
       >

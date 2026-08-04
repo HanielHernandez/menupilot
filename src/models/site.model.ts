@@ -34,6 +34,12 @@ export const SiteSettingsSchema = new Schema(
   {
     colors: { type: SiteColorsSchema, required: true },
     fonts: { type: SiteFontsSchema, required: true },
+    cornerRadius: {
+      type: String,
+      enum: ["none", "small", "medium", "large", "pill"],
+      default: "medium",
+      trim: true,
+    },
   },
   { _id: false },
 );

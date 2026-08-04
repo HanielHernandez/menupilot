@@ -16,7 +16,7 @@ export default function AboutBlockView({
   return (
     <section
       id="about"
-      className="grid gap-6 px-6 py-10 md:grid-cols-2 md:items-center"
+      className="grid gap-6 overflow-hidden rounded-[var(--site-radius)] px-6 py-10 md:grid-cols-2 md:items-center"
       style={{ color: foregroundColor }}
     >
       <div className="flex flex-col gap-3">
@@ -29,7 +29,7 @@ export default function AboutBlockView({
         <h2 className="text-2xl font-bold tracking-tight">{block.title}</h2>
         <p className="text-sm leading-relaxed opacity-85">{block.description}</p>
       </div>
-      <div className="aspect-[4/3] overflow-hidden rounded-lg bg-black/5">
+      <div className="aspect-[4/3] overflow-hidden rounded-[var(--site-radius)] bg-black/5">
         {imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={imageUrl} alt="" className="size-full object-cover" />

@@ -3,6 +3,20 @@ export type SiteTemplateMedia = {
   url: string;
 };
 
+export type CornerRadius = "none" | "small" | "medium" | "large" | "pill";
+
+export const CORNER_RADIUS_OPTIONS: {
+  id: CornerRadius;
+  label: string;
+  cssValue: string;
+}[] = [
+  { id: "none", label: "None", cssValue: "0px" },
+  { id: "small", label: "Small", cssValue: "0.375rem" },
+  { id: "medium", label: "Medium", cssValue: "0.75rem" },
+  { id: "large", label: "Large", cssValue: "1.25rem" },
+  { id: "pill", label: "Pill", cssValue: "9999px" },
+];
+
 export type SiteTemplateSettings = {
   colors: {
     primary: string;
@@ -16,6 +30,8 @@ export type SiteTemplateSettings = {
     body: string;
     useHeaderAsBody: boolean;
   };
+  /** Controls rounded corners on buttons and sections. */
+  cornerRadius: CornerRadius;
 };
 
 export type TypographyPreset = {
@@ -156,10 +172,31 @@ export type AboutBlock = BlockBase<"about"> & {
   imageId: string | null;
 };
 
+export type MenuBlockLayout = "list" | "tabs";
+export type MenuBlockColumns = 1 | 2;
+
 export type MenuBlock = BlockBase<"menu"> & {
   title: string;
   description: string;
+  /** How categories are presented. Defaults to list. */
+  layout?: MenuBlockLayout;
+  /** Item grid columns. Defaults to 1. */
+  columns?: MenuBlockColumns;
+  /** Bold menu item names. Defaults to false. */
+  boldItems?: boolean;
 };
+
+export function resolveMenuBlockDisplay(block: MenuBlock): {
+  layout: MenuBlockLayout;
+  columns: MenuBlockColumns;
+  boldItems: boolean;
+} {
+  return {
+    layout: block.layout === "tabs" ? "tabs" : "list",
+    columns: block.columns === 2 ? 2 : 1,
+    boldItems: Boolean(block.boldItems),
+  };
+}
 
 export type FooterBlock = BlockBase<"footer"> & {
   tagline: string;
@@ -205,6 +242,7 @@ export const DEFAULT_SITE_TEMPLATE: SiteTemplate = {
       body: "Inter",
       useHeaderAsBody: false,
     },
+    cornerRadius: "medium",
   },
   media: [    {
       id: "media-hero",
@@ -249,6 +287,9 @@ export const DEFAULT_SITE_TEMPLATE: SiteTemplate = {
       type: "menu",
       title: "Menu",
       description: "A selection of favorites from the kitchen.",
+      layout: "list",
+      columns: 1,
+      boldItems: false,
     },
     {
       id: "block-location",
@@ -287,6 +328,24 @@ export function resolveSiteFonts(settings: SiteTemplateSettings) {
   return { header, body };
 }
 
+export function resolveCornerRadius(
+  cornerRadius: CornerRadius | string | null | undefined,
+): CornerRadius {
+  return CORNER_RADIUS_OPTIONS.some((option) => option.id === cornerRadius)
+    ? (cornerRadius as CornerRadius)
+    : "medium";
+}
+
+export function resolveCornerRadiusCss(
+  cornerRadius: CornerRadius | string | null | undefined,
+): string {
+  const id = resolveCornerRadius(cornerRadius);
+  return (
+    CORNER_RADIUS_OPTIONS.find((option) => option.id === id)?.cssValue ??
+    "0.75rem"
+  );
+}
+
 /** Normalize legacy single-font settings into header/body fonts. */
 export function normalizeSiteSettings(
   settings: Partial<SiteTemplateSettings> & {
@@ -322,5 +381,8 @@ export function normalizeSiteSettings(
             ? true
             : fallback.fonts.useHeaderAsBody,
     },
+    cornerRadius: resolveCornerRadius(
+      settings.cornerRadius ?? fallback.cornerRadius,
+    ),
   };
 }

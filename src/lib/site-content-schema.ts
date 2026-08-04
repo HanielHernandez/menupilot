@@ -27,6 +27,9 @@ export const siteContentSchema = z.object({
       body: z.string().trim().min(1, { message: "Body font is required" }),
       useHeaderAsBody: z.boolean(),
     }),
+    cornerRadius: z
+      .enum(["none", "small", "medium", "large", "pill"])
+      .default("medium"),
   }),
   media: z.array(
     z.object({

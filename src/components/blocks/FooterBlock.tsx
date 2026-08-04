@@ -29,7 +29,7 @@ export default function FooterBlockView({
 
   return (
     <footer
-      className="flex flex-col gap-4 border-t px-6 py-8"
+      className="flex flex-col gap-4 overflow-hidden rounded-[var(--site-radius)] border-t px-6 py-8"
       style={{
         borderColor: `${foregroundColor}18`,
         backgroundColor,

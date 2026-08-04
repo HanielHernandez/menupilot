@@ -29,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import {
+  CORNER_RADIUS_OPTIONS,
   FONT_OPTIONS,
   TYPOGRAPHY_PRESETS,
   findTypographyPreset,
@@ -358,6 +359,38 @@ export default function SiteForm({
                 }}
               />
             </div>
+          </FormSection>
+
+          <Separator />
+
+          <FormSection
+            title="Corner radius"
+            description="Round buttons and sections across your public site."
+          >
+            <Controller
+              control={control}
+              name="settings.cornerRadius"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Corner radius</FieldLabel>
+                  <select
+                    className={selectClassName}
+                    value={field.value ?? "medium"}
+                    onChange={field.onChange}
+                    aria-invalid={Boolean(fieldState.error)}
+                  >
+                    {CORNER_RADIUS_OPTIONS.map((option) => (
+                      <option key={option.id} value={option.id}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </Field>
+              )}
+            />
           </FormSection>
 
           <Separator />

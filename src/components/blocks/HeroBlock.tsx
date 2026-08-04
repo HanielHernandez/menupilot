@@ -18,7 +18,7 @@ export default function HeroBlockView({
   return (
     <section
       id="top"
-      className="relative min-h-72 overflow-hidden"
+      className="relative min-h-72 overflow-hidden rounded-[var(--site-radius)]"
       style={{ color: foregroundColor, backgroundColor }}
     >
       {imageUrl ? (
@@ -44,7 +44,7 @@ export default function HeroBlockView({
         </p>
         <a
           href={block.ctaHref}
-          className="inline-flex w-fit rounded-md px-4 py-2 text-sm font-medium"
+          className="inline-flex w-fit rounded-[var(--site-radius)] px-4 py-2 text-sm font-medium"
           style={{ backgroundColor: primaryColor, color: backgroundColor }}
         >
           {block.ctaLabel}

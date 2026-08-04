@@ -20,7 +20,7 @@ export default function InviteFormBlockView({
   return (
     <section
       id="invite"
-      className="flex flex-col gap-4 px-6 py-10"
+      className="flex flex-col gap-4 overflow-hidden rounded-[var(--site-radius)] px-6 py-10"
       style={{ color: foregroundColor }}
     >
       <div className="flex flex-col gap-2">
@@ -43,26 +43,26 @@ export default function InviteFormBlockView({
           type="text"
           name="name"
           placeholder="Your name"
-          className="h-9 rounded-md border bg-transparent px-3 text-sm outline-none"
+          className="h-9 rounded-[var(--site-radius)] border bg-transparent px-3 text-sm outline-none"
           style={{ borderColor: `${secondaryColor}aa` }}
         />
         <input
           type="email"
           name="email"
           placeholder="Email"
-          className="h-9 rounded-md border bg-transparent px-3 text-sm outline-none"
+          className="h-9 rounded-[var(--site-radius)] border bg-transparent px-3 text-sm outline-none"
           style={{ borderColor: `${secondaryColor}aa` }}
         />
         <textarea
           name="message"
           placeholder="Date, time, party size"
           rows={3}
-          className="rounded-md border bg-transparent px-3 py-2 text-sm outline-none"
+          className="rounded-[var(--site-radius)] border bg-transparent px-3 py-2 text-sm outline-none"
           style={{ borderColor: `${secondaryColor}aa` }}
         />
         <button
           type="submit"
-          className="inline-flex w-fit rounded-md px-4 py-2 text-sm font-medium"
+          className="inline-flex w-fit rounded-[var(--site-radius)] px-4 py-2 text-sm font-medium"
           style={{ backgroundColor: primaryColor, color: backgroundColor }}
         >
           {block.submitLabel}

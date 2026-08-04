@@ -19,7 +19,7 @@ export default function LocationBlockView({
   return (
     <section
       id="location"
-      className="flex flex-col gap-4 px-6 py-10"
+      className="flex flex-col gap-4 overflow-hidden rounded-[var(--site-radius)] px-6 py-10"
       style={{ color: foregroundColor }}
     >
       <div className="flex flex-col gap-2">
@@ -33,7 +33,7 @@ export default function LocationBlockView({
         <p className="text-sm opacity-85">{block.description}</p>
       </div>
       <div
-        className="rounded-lg border p-4 text-sm"
+        className="rounded-[var(--site-radius)] border p-4 text-sm"
         style={{ borderColor: `${secondaryColor}88` }}
       >
         <p className="font-medium">{restaurant.name}</p>
