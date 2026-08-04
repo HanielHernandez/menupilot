@@ -26,6 +26,10 @@ export const config = {
   openai: {
     apiKey: env("OPENAI_API_KEY"),
   },
+  resend: {
+    apiKey: env("RESEND_API_KEY"),
+    fromEmail: env("RESEND_FROM_EMAIL", "MenuPilot <onboarding@resend.dev>"),
+  },
 } as const;
 
 export type AppConfig = typeof config;

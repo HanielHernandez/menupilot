@@ -1,4 +1,5 @@
 "use client";
+
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +15,6 @@ import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import * as z from "zod";
@@ -24,15 +24,11 @@ const formSchema = z.object({
     .string()
     .min(6, { message: "Email must be at least 6 characters" })
     .email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters" }),
 });
 
 type FormType = z.infer<typeof formSchema>;
 
-export default function SignInPage() {
-  const router = useRouter();
+export default function ForgotPasswordPage() {
   const {
     control,
     handleSubmit,
@@ -42,42 +38,45 @@ export default function SignInPage() {
   });
 
   const [serverError, setServerError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const onSubmit = async (data: FormType) => {
+    setServerError(null);
+    setSuccessMessage(null);
+
     try {
-      const { error } = await authClient.signIn.email({
+      const { error } = await authClient.requestPasswordReset({
         email: data.email,
-        password: data.password,
+        redirectTo: `${window.location.origin}/auth/reset-password`,
       });
 
       if (error) {
-        // Don't leak whether the email exists — keep it generic
         setServerError(
-          error.status === 401 || error.status === 403
-            ? "Invalid email or password"
-            : (error.message ?? "Something went wrong. Try again."),
+          error.message ?? "Something went wrong. Try again.",
         );
         return;
       }
 
-      router.replace("/dashboard");
+      setSuccessMessage(
+        "If this email exists in our system, check your inbox for a reset link.",
+      );
     } catch (error: unknown) {
       setServerError(
         error instanceof Error
           ? error.message
           : "Something went wrong. Try again.",
       );
-      console.error(error);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="flex min-h-screen items-center justify-center p-4">
       <Card className="w-full md:max-w-md">
         <CardHeader>
-          <CardTitle>Sign In</CardTitle>
+          <CardTitle>Forgot password</CardTitle>
           <CardDescription>
-            Enter your email and password to sign in.
+            Enter your email and we&apos;ll send you a link to reset your
+            password.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -102,29 +101,12 @@ export default function SignInPage() {
               )}
             />
 
-            <Controller
-              control={control}
-              name="password"
-              render={({ field, fieldState }) => (
-                <Field>
-                  <div className="flex items-center justify-between gap-2">
-                    <FieldLabel>Password</FieldLabel>
-                    <Link
-                      href="/auth/forgot-password"
-                      className="text-muted-foreground text-sm hover:text-foreground underline-offset-4 hover:underline"
-                    >
-                      Forgot password?
-                    </Link>
-                  </div>
-                  <Input type="password" required id="password" {...field} />
-                  {fieldState.error && (
-                    <FieldError errors={[fieldState.error]} />
-                  )}
-                </Field>
-              )}
-            />
-
-            {serverError && <p className="text-red-500">{serverError}</p>}
+            {serverError ? (
+              <p className="text-sm text-red-500">{serverError}</p>
+            ) : null}
+            {successMessage ? (
+              <p className="text-sm text-emerald-700">{successMessage}</p>
+            ) : null}
 
             <Button
               type="button"
@@ -134,16 +116,16 @@ export default function SignInPage() {
               {isSubmitting ? (
                 <Spinner className="h-4 w-4 animate-spin" />
               ) : (
-                "Sign In"
+                "Send reset link"
               )}
             </Button>
           </form>
         </CardContent>
         <CardFooter>
-          <p className="text-sm text-muted-foreground text-center">
-            Dont have an account? click here to{" "}
-            <Link href="/auth/signup" className="font-bold text-blue-500">
-              Sign Up
+          <p className="text-muted-foreground text-center text-sm">
+            Remember your password?{" "}
+            <Link href="/auth/signin" className="font-bold text-blue-500">
+              Sign In
             </Link>
           </p>
         </CardFooter>
