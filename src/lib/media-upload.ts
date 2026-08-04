@@ -2,6 +2,11 @@ import {
   createMedia,
   type MediaRecord,
 } from "@/app/repositories/media.repo";
+import { getRestaurantStorageBytes } from "@/app/repositories/usage.repo";
+import {
+  MAX_STORAGE_BYTES,
+  storageLimitErrorMessage,
+} from "@/lib/usage-limits";
 import { headObjectFromR2, uploadObjectToR2 } from "@/lib/s3";
 import type { Types } from "mongoose";
 
@@ -31,6 +36,12 @@ export async function uploadImageAndCreateMedia(
 
   if (file.size === 0) {
     throw new Error("No file provided");
+  }
+
+  const restaurantIdStr = restaurantId.toString();
+  const usedBytes = await getRestaurantStorageBytes(restaurantIdStr);
+  if (usedBytes + file.size > MAX_STORAGE_BYTES) {
+    throw new Error(storageLimitErrorMessage());
   }
 
   const folder = input.folder ?? "media";

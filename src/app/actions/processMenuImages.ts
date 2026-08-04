@@ -1,5 +1,9 @@
 "use server";
 
+import {
+  getMenuProcessCountToday,
+  recordMenuProcess,
+} from "@/app/repositories/usage.repo";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import {
@@ -9,6 +13,10 @@ import {
   type ExtractedMenu,
 } from "@/lib/menu-extract";
 import { extractMenuFromImage } from "@/lib/openai";
+import {
+  MAX_MENU_PROCESSES_PER_DAY,
+  menuProcessLimitErrorMessage,
+} from "@/lib/usage-limits";
 import { MediaModel } from "@/models/media.model";
 import { MenuImageModel } from "@/models/menu-image.model";
 import { RestaurantModel } from "@/models/restaurant.model";
@@ -89,6 +97,21 @@ export async function processMenuImagesAction(
       error: "No uploaded images to process",
     };
   }
+
+  const restaurantId = restaurant._id.toString();
+  const processCountToday = await getMenuProcessCountToday(restaurantId);
+  if (processCountToday >= MAX_MENU_PROCESSES_PER_DAY) {
+    return {
+      success: false,
+      error: menuProcessLimitErrorMessage(),
+    };
+  }
+
+  await recordMenuProcess({
+    restaurantId,
+    userId: session.user.id,
+    imageCount: uploadedImages.length,
+  });
 
   const mediaIds = uploadedImages
     .map((image) => image.mediaId)
