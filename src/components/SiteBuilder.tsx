@@ -200,14 +200,15 @@ export default function SiteBuilder({
           draft anytime; publish when you want it live.
         </p>
 
-        <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden lg:flex-row lg:items-stretch">
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden lg:w-[350px] lg:flex-none">
+        {/* p-px keeps card rings inside the overflow clip (rings use box-shadow) */}
+        <div className="flex min-h-0 flex-1 flex-col gap-4 p-px lg:flex-row lg:items-stretch">
+          <div className="min-h-0 min-w-0 flex-1 lg:w-[350px] lg:flex-none">
             <SiteForm onStatusChange={setStatus} className="h-full" />
           </div>
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden">
+          <div className="min-h-0 min-w-0 flex-1">
             <SitePreview className="h-full" />
           </div>
-          <div className="min-h-0 min-w-0 flex-1 overflow-hidden lg:w-auto lg:flex-none">
+          <div className="min-h-0 min-w-0 flex-1 lg:w-auto lg:flex-none">
             <SiteBlockEditor className="h-full" />
           </div>
         </div>

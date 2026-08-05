@@ -185,7 +185,7 @@ export default function MenuBlockView({
   return (
     <section
       id="menu"
-      className="flex flex-col gap-8 overflow-hidden rounded-[var(--site-radius)] px-6 py-10"
+      className="flex flex-col gap-8 overflow-hidden px-6 py-10"
       style={{ color: foregroundColor }}
     >
       <div className="flex flex-col gap-2">

@@ -59,8 +59,7 @@ export default function SiteTemplateRenderer({
       <div
         className={cn(
           "[&_h1]:[font-family:var(--site-header-font)] [&_h2]:[font-family:var(--site-header-font)] [&_h3]:[font-family:var(--site-header-font)]",
-          variant === "preview" &&
-            "overflow-hidden rounded-xl border border-border",
+          variant === "preview" && "overflow-hidden",
           variant === "public" && "min-h-svh w-full max-w-7xl mx-auto",
         )}
         style={

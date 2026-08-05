@@ -43,7 +43,7 @@ export default function SitePreview({ className }: SitePreviewProps) {
         <CardTitle>Preview</CardTitle>
         <CardDescription>Live site template</CardDescription>
       </CardHeader>
-      <CardContent className="min-h-0 flex-1 overflow-y-auto">
+      <CardContent className="min-h-0 flex-1 overflow-y-auto p-0">
         <SiteTemplateRenderer
           blocks={template.blocks}
           media={template.media}

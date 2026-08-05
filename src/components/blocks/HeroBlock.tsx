@@ -18,7 +18,7 @@ export default function HeroBlockView({
   return (
     <section
       id="top"
-      className="relative min-h-72 overflow-hidden rounded-[var(--site-radius)]"
+      className="relative min-h-72 overflow-hidden"
       style={{ color: foregroundColor, backgroundColor }}
     >
       {imageUrl ? (

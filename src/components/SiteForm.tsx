@@ -191,7 +191,7 @@ export default function SiteForm({
     <form
       id="site-form"
       onSubmit={onSubmit}
-      className={cn("flex h-full min-h-0 flex-col border", className)}
+      className={cn("flex h-full min-h-0 flex-col", className)}
     >
       <Card className="h-full min-h-0">
         <CardHeader className="shrink-0 border-b">

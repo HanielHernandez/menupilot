@@ -16,7 +16,7 @@ export default function AboutBlockView({
   return (
     <section
       id="about"
-      className="grid gap-6 overflow-hidden rounded-[var(--site-radius)] px-6 py-10 md:grid-cols-2 md:items-center"
+      className="grid gap-6 overflow-hidden px-6 py-10 md:grid-cols-2 md:items-center"
       style={{ color: foregroundColor }}
     >
       <div className="flex flex-col gap-3">

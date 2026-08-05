@@ -19,7 +19,7 @@ export default function LocationBlockView({
   return (
     <section
       id="location"
-      className="flex flex-col gap-4 overflow-hidden rounded-[var(--site-radius)] px-6 py-10"
+      className="flex flex-col gap-4 overflow-hidden px-6 py-10"
       style={{ color: foregroundColor }}
     >
       <div className="flex flex-col gap-2">
