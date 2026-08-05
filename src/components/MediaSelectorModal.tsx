@@ -16,6 +16,10 @@ import {
 } from "@/components/ui/dialog";
 import { DropZone, type DropZoneFile } from "@/components/ui/drop-zone";
 import { Spinner } from "@/components/ui/spinner";
+import {
+  MAX_UPLOAD_BODY_BYTES,
+  MAX_UPLOAD_BODY_MB,
+} from "@/lib/usage-limits";
 import { cn } from "@/lib/utils";
 import {
   CheckIcon,
@@ -94,6 +98,7 @@ function MediaSelectorModalBody({
   const [tab, setTab] = useState<TabId>(availableTabs[0] ?? "upload");
   const [pendingFiles, setPendingFiles] = useState<DropZoneFile[]>([]);
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [selected, setSelected] = useState(() =>
     buildInitialSelection(initialSelectedIds),
   );
@@ -208,8 +213,36 @@ function MediaSelectorModalBody({
     });
   };
 
+  const reportUploadError = (message: string) => {
+    setUploadError(message);
+    toast.error(message);
+  };
+
   const handleUpload = async () => {
     if (pendingFiles.length === 0 || isUploading) return;
+
+    setUploadError(null);
+
+    const totalBytes = pendingFiles.reduce(
+      (sum, item) => sum + item.file.size,
+      0,
+    );
+    if (totalBytes > MAX_UPLOAD_BODY_BYTES) {
+      reportUploadError(
+        `Selected files exceed the ${MAX_UPLOAD_BODY_MB} MB upload limit. Remove some files or choose smaller ones.`,
+      );
+      return;
+    }
+
+    const oversized = pendingFiles.find(
+      (item) => item.file.size > MAX_UPLOAD_BODY_BYTES,
+    );
+    if (oversized) {
+      reportUploadError(
+        `${oversized.file.name} exceeds the ${MAX_UPLOAD_BODY_MB} MB upload limit.`,
+      );
+      return;
+    }
 
     setIsUploading(true);
     try {
@@ -220,7 +253,9 @@ function MediaSelectorModalBody({
         formData.append("file", item.file);
         const result = await uploadMediaAction(formData);
         if (!result.success) {
-          toast.error(result.error || "Failed to upload media");
+          reportUploadError(
+            result.error || `Failed to upload ${item.file.name}`,
+          );
           return;
         }
         uploaded.push(result.media);
@@ -237,6 +272,7 @@ function MediaSelectorModalBody({
       });
 
       clearPendingFiles();
+      setUploadError(null);
       toast.success(
         uploaded.length === 1
           ? "Media uploaded"
@@ -251,6 +287,16 @@ function MediaSelectorModalBody({
 
       setTab("library");
       await loadLibrary(1);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Failed to upload media";
+      const isBodyLimit =
+        /body.*size|Body exceeded|too large|413|payload/i.test(message);
+      reportUploadError(
+        isBodyLimit
+          ? `Upload failed: files exceed the ${MAX_UPLOAD_BODY_MB} MB limit.`
+          : message || "Failed to upload media. Please try again.",
+      );
     } finally {
       setIsUploading(false);
     }
@@ -314,15 +360,26 @@ function MediaSelectorModalBody({
           <div className="flex flex-col gap-4">
             <DropZone
               files={pendingFiles}
-              onFilesChange={setPendingFiles}
+              onFilesChange={(next) => {
+                setUploadError(null);
+                setPendingFiles(next);
+              }}
               multiple={multiple}
               maxFiles={multiple ? 20 : 1}
+              maxSizeMb={MAX_UPLOAD_BODY_MB}
+              maxTotalSizeMb={MAX_UPLOAD_BODY_MB}
               accept={IMAGE_ACCEPT}
               acceptAttr="image/jpeg,image/png,image/webp,image/gif"
               disabled={isUploading}
               label={isUploading ? "Uploading…" : "Drop images here"}
               description="JPEG, PNG, WebP, or GIF"
             />
+
+            {uploadError ? (
+              <p className="text-destructive text-sm" role="alert">
+                {uploadError}
+              </p>
+            ) : null}
 
             {pendingFiles.length > 0 ? (
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">

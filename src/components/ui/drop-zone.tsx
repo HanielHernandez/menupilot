@@ -43,6 +43,8 @@ type DropZoneProps = {
   multiple?: boolean;
   maxFiles?: number;
   maxSizeMb?: number;
+  /** Max combined size of all selected files (MB). */
+  maxTotalSizeMb?: number;
   disabled?: boolean;
   className?: string;
   label?: string;
@@ -84,6 +86,7 @@ export function DropZone({
   multiple = true,
   maxFiles = 20,
   maxSizeMb = 10,
+  maxTotalSizeMb,
   disabled = false,
   className,
   label = "Drop files here",
@@ -96,6 +99,9 @@ export function DropZone({
   const [error, setError] = useState<string | null>(null);
 
   const files = controlledFiles ?? internalFiles;
+  const totalBytes = files.reduce((sum, item) => sum + item.file.size, 0);
+  const maxTotalBytes =
+    maxTotalSizeMb !== undefined ? maxTotalSizeMb * 1024 * 1024 : null;
 
   const setFiles = useCallback(
     (next: DropZoneFile[]) => {
@@ -115,8 +121,13 @@ export function DropZone({
       setError(null);
 
       const maxBytes = maxSizeMb * 1024 * 1024;
+      const maxTotal =
+        maxTotalSizeMb !== undefined
+          ? maxTotalSizeMb * 1024 * 1024
+          : null;
       const next = multiple ? [...files] : [];
       const rejected: string[] = [];
+      let runningTotal = next.reduce((sum, item) => sum + item.file.size, 0);
 
       for (const file of list) {
         if (!multiple && next.length >= 1) break;
@@ -129,8 +140,16 @@ export function DropZone({
           continue;
         }
         if (file.size > maxBytes) {
-          rejected.push(`${file.name} exceeds ${maxSizeMb} MB`);
+          rejected.push(
+            `${file.name} exceeds the ${maxSizeMb} MB size limit`,
+          );
           continue;
+        }
+        if (maxTotal !== null && runningTotal + file.size > maxTotal) {
+          rejected.push(
+            `Selected files exceed the ${maxTotalSizeMb} MB upload limit. Remove some files or choose smaller ones.`,
+          );
+          break;
         }
         const alreadyAdded = next.some(
           (item) =>
@@ -141,6 +160,7 @@ export function DropZone({
         if (alreadyAdded) continue;
 
         next.push(createDropZoneFile(file));
+        runningTotal += file.size;
       }
 
       if (rejected.length) {
@@ -149,7 +169,7 @@ export function DropZone({
 
       setFiles(next);
     },
-    [accept, files, maxFiles, maxSizeMb, multiple, setFiles],
+    [accept, files, maxFiles, maxSizeMb, maxTotalSizeMb, multiple, setFiles],
   );
 
   const removeFile = useCallback(
@@ -221,7 +241,10 @@ export function DropZone({
           <p className="text-sm font-medium">{label}</p>
           <p id={`${inputId}-hint`} className="text-muted-foreground text-xs">
             {description}
-            {multiple ? " · multiple files" : ""} · max {maxSizeMb} MB each
+            {multiple ? " · multiple files" : ""}
+            {maxTotalSizeMb !== undefined
+              ? ` · max ${maxTotalSizeMb} MB total`
+              : ` · max ${maxSizeMb} MB each`}
           </p>
         </div>
         <Button
@@ -249,6 +272,19 @@ export function DropZone({
       </div>
 
       {error && <p className="text-destructive text-sm">{error}</p>}
+
+      {files.length > 0 && maxTotalBytes !== null ? (
+        <p
+          className={cn(
+            "text-xs",
+            totalBytes > maxTotalBytes
+              ? "text-destructive"
+              : "text-muted-foreground",
+          )}
+        >
+          {formatBytes(totalBytes)} of {maxTotalSizeMb} MB selected
+        </p>
+      ) : null}
 
       {files.length > 0 && (
         <ul className="flex flex-col gap-2">

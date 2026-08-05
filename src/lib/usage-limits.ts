@@ -2,6 +2,10 @@
 export const MAX_STORAGE_BYTES = 2 * 1024 ** 3; // 2GB
 export const MAX_MENU_PROCESSES_PER_DAY = 3;
 
+/** Matches `experimental.serverActions.bodySizeLimit` in next.config.ts */
+export const MAX_UPLOAD_BODY_MB = 5;
+export const MAX_UPLOAD_BODY_BYTES = MAX_UPLOAD_BODY_MB * 1024 * 1024;
+
 export const USAGE_EVENT_TYPES = ["menu_process"] as const;
 export type UsageEventType = (typeof USAGE_EVENT_TYPES)[number];
 
