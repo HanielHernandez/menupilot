@@ -1,4 +1,6 @@
+import { findPublishedSiteByRestaurantId } from "@/app/repositories/site.repo";
 import MenuWorkspace from "@/components/MenuWorkspace";
+import { ShareMenuButton } from "@/components/ShareMenuButton";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
 import { flattenMenuItems, type ExtractedCategory } from "@/lib/menu-extract";
@@ -29,7 +31,7 @@ export default async function MenuPage() {
     return null;
   }
 
-  const [menuImages, categories, menuItems] = await Promise.all([
+  const [menuImages, categories, menuItems, publishedSite] = await Promise.all([
     MenuImageModel.find({
       restaurantId: restaurant._id,
       deletedAt: null,
@@ -46,7 +48,10 @@ export default async function MenuPage() {
     })
       .sort({ name: 1 })
       .lean(),
+    findPublishedSiteByRestaurantId(restaurant._id.toString()),
   ]);
+
+  const isPublished = Boolean(publishedSite?.publishedAt);
 
   const mediaIds = menuImages
     .map((item) => item.mediaId)
@@ -93,12 +98,20 @@ export default async function MenuPage() {
 
   return (
     <div className="mx-auto flex w-full max-w-7xl flex-col gap-6">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-bold">Menu</h2>
-        <p className="text-muted-foreground text-sm">
-          Manage menu uploads, extracted content, and image files for{" "}
-          {restaurant.name}
-        </p>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-2xl font-bold">Menu</h2>
+          <p className="text-muted-foreground text-sm">
+            Manage menu uploads, extracted content, and image files for{" "}
+            {restaurant.name}
+          </p>
+        </div>
+        {isPublished ? (
+          <ShareMenuButton
+            restaurantSlug={restaurant.slug}
+            restaurantName={restaurant.name}
+          />
+        ) : null}
       </div>
 
       <MenuWorkspace

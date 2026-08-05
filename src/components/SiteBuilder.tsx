@@ -10,19 +10,13 @@ import {
   type SiteBuilderRestaurant,
   type SiteBuilderValues,
 } from "@/components/SiteBuilderProvider";
-import { ShareSiteDialog } from "@/components/ShareSiteDialog";
 import SiteForm from "@/components/SiteForm";
 import SitePreview from "@/components/SitePreview";
 import { Button } from "@/components/ui/button";
 import { Spinner } from "@/components/ui/spinner";
 import type { SiteTemplate } from "@/lib/site-template";
 import { cn } from "@/lib/utils";
-import {
-  ExternalLinkIcon,
-  GlobeIcon,
-  SaveIcon,
-  Share2Icon,
-} from "lucide-react";
+import { ExternalLinkIcon, GlobeIcon, SaveIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useFormContext } from "react-hook-form";
@@ -69,7 +63,6 @@ function SiteToolbar({
   const { handleSubmit } = useFormContext<SiteBuilderValues>();
   const [isSaving, setIsSaving] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
   const isBusy = isSaving || isPublishing;
   const isPublished = status.status === "published";
   const publicSiteHref = `/site/${restaurant.slug}`;
@@ -129,36 +122,20 @@ function SiteToolbar({
 
       <div className="flex flex-wrap items-center gap-2">
         {isPublished ? (
-          <>
-            <Button
-              variant="outline"
-              nativeButton={false}
-              render={
-                <Link
-                  href={publicSiteHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                />
-              }
-            >
-              <ExternalLinkIcon className="size-4" />
-              Preview
-            </Button>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShareOpen(true)}
-            >
-              <Share2Icon className="size-4" />
-              Share
-            </Button>
-            <ShareSiteDialog
-              open={shareOpen}
-              onOpenChange={setShareOpen}
-              restaurantSlug={restaurant.slug}
-              restaurantName={restaurant.name}
-            />
-          </>
+          <Button
+            variant="outline"
+            nativeButton={false}
+            render={
+              <Link
+                href={publicSiteHref}
+                target="_blank"
+                rel="noopener noreferrer"
+              />
+            }
+          >
+            <ExternalLinkIcon className="size-4" />
+            Preview
+          </Button>
         ) : null}
         <Button
           type="button"
