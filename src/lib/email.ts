@@ -7,6 +7,7 @@ export type SendEmailInput = {
   html: string;
   text?: string;
   from?: string;
+  replyTo?: string | string[];
 };
 
 function getResendClient() {
@@ -15,6 +16,14 @@ function getResendClient() {
     throw new Error("RESEND_API_KEY is not configured");
   }
   return new Resend(apiKey);
+}
+
+function escapeHtml(value: string) {
+  return value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
 }
 
 /** Send an email via Resend. */
@@ -28,6 +37,7 @@ export async function sendEmail(input: SendEmailInput) {
     subject: input.subject,
     html: input.html,
     text: input.text,
+    replyTo: input.replyTo,
   });
 
   if (error) {
@@ -78,6 +88,50 @@ export async function sendPasswordResetEmail(input: {
   return sendEmail({
     to: input.to,
     subject: "Reset your MenuPilot password",
+    html,
+    text,
+  });
+}
+
+export async function sendTableRequestEmail(input: {
+  to: string;
+  restaurantName: string;
+  guestName: string;
+  guestEmail: string;
+  message: string;
+}) {
+  const restaurantName = input.restaurantName.trim() || "your restaurant";
+  const guestName = input.guestName.trim();
+  const guestEmail = input.guestEmail.trim();
+  const message = input.message.trim();
+
+  const text = [
+    `New table request for ${restaurantName}`,
+    "",
+    `Name: ${guestName}`,
+    `Email: ${guestEmail}`,
+    "",
+    "Request details:",
+    message,
+  ].join("\n");
+
+  const html = `
+    <div style="font-family: sans-serif; line-height: 1.5; color: #1f1c18;">
+      <p>New table request for <strong>${escapeHtml(restaurantName)}</strong></p>
+      <p>
+        <strong>Name:</strong> ${escapeHtml(guestName)}<br />
+        <strong>Email:</strong>
+        <a href="mailto:${escapeHtml(guestEmail)}">${escapeHtml(guestEmail)}</a>
+      </p>
+      <p><strong>Request details:</strong></p>
+      <p style="white-space: pre-wrap;">${escapeHtml(message)}</p>
+    </div>
+  `;
+
+  return sendEmail({
+    to: input.to,
+    replyTo: guestEmail,
+    subject: `Table request from ${guestName}`,
     html,
     text,
   });

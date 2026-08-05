@@ -35,6 +35,13 @@ const RestaurantSchema = new Schema(
       default: "",
     },
 
+    email: {
+      type: String,
+      default: "",
+      trim: true,
+      lowercase: true,
+    },
+
     phoneNumber: {
       type: String,
       default: "",

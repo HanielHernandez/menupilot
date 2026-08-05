@@ -41,6 +41,13 @@ const restaurantFormSchema = z.object({
   description: z.string().trim().optional(),
   logoMediaId: optionalMediaId,
   address: z.string().trim().optional(),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || z.email().safeParse(value).success, {
+      message: "Enter a valid email address",
+    }),
   phoneNumber: z.string().trim().optional(),
   whatsappNumber: z.string().trim().optional(),
   socials: z.object({

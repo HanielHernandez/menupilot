@@ -20,6 +20,7 @@ export function getRestaurantSocialLinks(
 
 export type RestaurantContactInfo = {
   address?: string;
+  email?: string;
   phoneNumber?: string;
   whatsappNumber?: string;
 };
@@ -29,6 +30,7 @@ export function getRestaurantContactInfo(
 ): RestaurantContactInfo {
   return {
     address: restaurant.address?.trim() || undefined,
+    email: restaurant.email?.trim() || undefined,
     phoneNumber: restaurant.phoneNumber?.trim() || undefined,
     whatsappNumber: restaurant.whatsappNumber?.trim() || undefined,
   };

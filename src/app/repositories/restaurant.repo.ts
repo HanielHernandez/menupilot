@@ -13,6 +13,7 @@ export type CreateRestaurantInput = {
   description?: string;
   logoMediaId?: string | null;
   address?: string;
+  email?: string;
   phoneNumber?: string;
   whatsappNumber?: string;
   socials?: {
@@ -44,6 +45,7 @@ export async function createRestaurant(input: CreateRestaurantInput) {
     description: input.description ?? "",
     logoMediaId: input.logoMediaId || null,
     address: input.address ?? "",
+    email: input.email ?? "",
     phoneNumber: input.phoneNumber ?? "",
     whatsappNumber: input.whatsappNumber ?? "",
     socials: {
@@ -66,6 +68,7 @@ export type UpdateRestaurantInput = {
   description?: string;
   logoMediaId?: string | null;
   address?: string;
+  email?: string;
   phoneNumber?: string;
   whatsappNumber?: string;
   socials?: {
@@ -93,6 +96,7 @@ export async function updateRestaurantByOwnerId(
         description: input.description?.trim() ?? "",
         logoMediaId: input.logoMediaId?.trim() || null,
         address: input.address?.trim() ?? "",
+        email: input.email?.trim().toLowerCase() ?? "",
         phoneNumber: input.phoneNumber?.trim() ?? "",
         whatsappNumber: input.whatsappNumber?.trim() ?? "",
         socials: {

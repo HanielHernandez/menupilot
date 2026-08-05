@@ -89,6 +89,7 @@ export type SiteBuilderRestaurant = {
   logoMediaId: string | null;
   logoUrl: string;
   address: string;
+  email: string;
   phoneNumber: string;
   whatsappNumber: string;
   socials: {

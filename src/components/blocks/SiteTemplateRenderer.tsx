@@ -135,6 +135,8 @@ export default function SiteTemplateRenderer({
                 <InviteFormBlockView
                   key={block.id}
                   block={block}
+                  restaurantSlug={restaurant.slug}
+                  isPreview={variant === "preview"}
                   primaryColor={colors.primary}
                   foregroundColor={colors.foreground}
                   backgroundColor={colors.background}

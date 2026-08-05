@@ -55,6 +55,13 @@ const restaurantSchema = z.object({
   description: z.string().optional(),
   logoMediaId: optionalMediaId,
   address: z.string().optional(),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || z.email().safeParse(value).success, {
+      message: "Enter a valid email address",
+    }),
   phoneNumber: z.string().optional(),
   whatsappNumber: z.string().optional(),
   socials: z.object({
@@ -76,6 +83,7 @@ export type RestaurantEditFormValues = {
   logoMediaId: string;
   logoUrl?: string;
   address: string;
+  email: string;
   phoneNumber: string;
   whatsappNumber: string;
   socials: {
@@ -292,7 +300,7 @@ export default function RestaurantEditForm({
 
           <FormSection
             title="Contact"
-            description="Address and phone numbers shown on your public site."
+            description="Address, email, and phone numbers used on your public site and table requests."
           >
             <Controller
               control={control}
@@ -301,6 +309,27 @@ export default function RestaurantEditForm({
                 <Field>
                   <FieldLabel>Address</FieldLabel>
                   <Textarea {...field} value={field.value ?? ""} rows={2} />
+                  {fieldState.error ? (
+                    <FieldError>{fieldState.error.message}</FieldError>
+                  ) : null}
+                </Field>
+              )}
+            />
+            <Controller
+              control={control}
+              name="email"
+              render={({ field, fieldState }) => (
+                <Field>
+                  <FieldLabel>Email</FieldLabel>
+                  <Input
+                    type="email"
+                    {...field}
+                    value={field.value ?? ""}
+                    placeholder="reservations@yourrestaurant.com"
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    Table reservation requests from your site are sent here.
+                  </p>
                   {fieldState.error ? (
                     <FieldError>{fieldState.error.message}</FieldError>
                   ) : null}

@@ -49,6 +49,7 @@ export default async function SitePage() {
           logoMediaId,
           logoUrl: logoMedia?.url ?? "",
           address: restaurant.address ?? "",
+          email: restaurant.email ?? "",
           phoneNumber: restaurant.phoneNumber ?? "",
           whatsappNumber: restaurant.whatsappNumber ?? "",
           socials: {

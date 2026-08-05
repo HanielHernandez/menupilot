@@ -37,6 +37,13 @@ const restaurantSchema = z.object({
     }),
   description: z.string().optional(),
   address: z.string().optional(),
+  email: z
+    .string()
+    .trim()
+    .optional()
+    .refine((value) => !value || z.email().safeParse(value).success, {
+      message: "Enter a valid email address",
+    }),
   phoneNumber: z.string().optional(),
   whatsappNumber: z.string().optional(),
   socials: z.object({
@@ -107,6 +114,7 @@ export default function OnboardingWizard() {
       slug: "",
       description: "",
       address: "",
+      email: "",
       phoneNumber: "",
       whatsappNumber: "",
       socials: {
@@ -160,7 +168,7 @@ export default function OnboardingWizard() {
   const goNext = async () => {
     const fieldsByStep = {
       1: ["name", "slug", "description"] as const,
-      2: ["address", "phoneNumber", "whatsappNumber"] as const,
+      2: ["address", "email", "phoneNumber", "whatsappNumber"] as const,
       3: [
         "socials.instagram",
         "socials.tiktok",
@@ -330,6 +338,28 @@ export default function OnboardingWizard() {
                       placeholder="Street, city, and postal code"
                       {...field}
                     />
+                    {fieldState.error && (
+                      <FieldError>{fieldState.error.message}</FieldError>
+                    )}
+                  </Field>
+                )}
+              />
+
+              <Controller
+                control={control}
+                name="email"
+                render={({ field, fieldState }) => (
+                  <Field>
+                    <FieldLabel>Email</FieldLabel>
+                    <Input
+                      type="email"
+                      className="bg-white"
+                      placeholder="reservations@yourrestaurant.com"
+                      {...field}
+                    />
+                    <p className="text-muted-foreground text-xs">
+                      Table reservation requests from your site are sent here.
+                    </p>
                     {fieldState.error && (
                       <FieldError>{fieldState.error.message}</FieldError>
                     )}

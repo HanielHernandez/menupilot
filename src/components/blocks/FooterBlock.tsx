@@ -24,6 +24,7 @@ export default function FooterBlockView({
   const contact = getRestaurantContactInfo(restaurant);
   const hasContact =
     Boolean(contact.address) ||
+    Boolean(contact.email) ||
     Boolean(contact.phoneNumber) ||
     Boolean(contact.whatsappNumber);
 
@@ -44,6 +45,14 @@ export default function FooterBlockView({
       {hasContact ? (
         <div className="flex flex-col gap-1 text-sm opacity-85">
           {contact.address ? <p>{contact.address}</p> : null}
+          {contact.email ? (
+            <a
+              href={`mailto:${contact.email}`}
+              className="hover:opacity-100"
+            >
+              {contact.email}
+            </a>
+          ) : null}
           {contact.phoneNumber ? (
             <a href={`tel:${contact.phoneNumber}`} className="hover:opacity-100">
               {contact.phoneNumber}
