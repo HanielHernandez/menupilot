@@ -1,3 +1,5 @@
+import { DEFAULT_CURRENCY, getCurrency } from "@/lib/currencies";
+
 export type SiteTemplateMedia = {
   id: string;
   url: string;
@@ -184,17 +186,21 @@ export type MenuBlock = BlockBase<"menu"> & {
   columns?: MenuBlockColumns;
   /** Bold menu item names. Defaults to false. */
   boldItems?: boolean;
+  /** ISO currency code for menu prices (e.g. USD, NIO). */
+  coin?: string;
 };
 
 export function resolveMenuBlockDisplay(block: MenuBlock): {
   layout: MenuBlockLayout;
   columns: MenuBlockColumns;
   boldItems: boolean;
+  coin: string;
 } {
   return {
     layout: block.layout === "tabs" ? "tabs" : "list",
     columns: block.columns === 2 ? 2 : 1,
     boldItems: Boolean(block.boldItems),
+    coin: getCurrency(block.coin).value,
   };
 }
 
@@ -290,6 +296,7 @@ export const DEFAULT_SITE_TEMPLATE: SiteTemplate = {
       layout: "list",
       columns: 1,
       boldItems: false,
+      coin: DEFAULT_CURRENCY,
     },
     {
       id: "block-location",

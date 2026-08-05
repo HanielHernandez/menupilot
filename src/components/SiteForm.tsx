@@ -145,8 +145,7 @@ export default function SiteForm({
   const useHeaderAsBody = Boolean(
     useWatch({ control, name: "settings.fonts.useHeaderAsBody" }),
   );
-  const headerFont =
-    useWatch({ control, name: "settings.fonts.header" }) ?? "";
+  const headerFont = useWatch({ control, name: "settings.fonts.header" }) ?? "";
   const bodyFont = useWatch({ control, name: "settings.fonts.body" }) ?? "";
   const activePreset = findTypographyPreset(
     headerFont,
@@ -192,7 +191,7 @@ export default function SiteForm({
     <form
       id="site-form"
       onSubmit={onSubmit}
-      className={cn("flex h-full min-h-0 flex-col", className)}
+      className={cn("flex h-full min-h-0 flex-col border", className)}
     >
       <Card className="h-full min-h-0">
         <CardHeader className="shrink-0 border-b">

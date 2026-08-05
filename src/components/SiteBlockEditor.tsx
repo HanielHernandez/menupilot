@@ -14,6 +14,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { currencies, DEFAULT_CURRENCY } from "@/lib/currencies";
 import type { SiteBlock } from "@/lib/site-template";
 import { cn } from "@/lib/utils";
 import {
@@ -265,6 +266,37 @@ export default function SiteBlockEditor({ className }: SiteBlockEditorProps) {
                             onCheckedChange={field.onChange}
                           />
                         </div>
+                      )}
+                    />
+                    <Controller
+                      control={control}
+                      name={
+                        `blocks.${index}.coin` as Path<SiteBuilderValues>
+                      }
+                      render={({ field }) => (
+                        <Field>
+                          <FieldLabel>Currency</FieldLabel>
+                          <select
+                            className={selectClassName}
+                            value={
+                              typeof field.value === "string" && field.value
+                                ? field.value
+                                : DEFAULT_CURRENCY
+                            }
+                            onChange={(event) =>
+                              field.onChange(event.target.value)
+                            }
+                          >
+                            {currencies.map((currency) => (
+                              <option
+                                key={currency.value}
+                                value={currency.value}
+                              >
+                                {currency.label}
+                              </option>
+                            ))}
+                          </select>
+                        </Field>
                       )}
                     />
                   </>

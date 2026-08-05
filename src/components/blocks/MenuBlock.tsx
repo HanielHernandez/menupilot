@@ -1,5 +1,6 @@
 "use client";
 
+import { formatCurrencyAmount } from "@/lib/currencies";
 import type { ExtractedCategory, ExtractedMenuItem } from "@/lib/menu-extract";
 import {
   resolveMenuBlockDisplay,
@@ -81,20 +82,15 @@ const SAMPLE_CATEGORIES: ExtractedCategory[] = [
   },
 ];
 
-function formatPrice(price: number) {
-  return new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: "USD",
-  }).format(price);
-}
-
 function MenuItemRow({
   item,
+  coin,
   primaryColor,
   secondaryColor,
   boldItems,
 }: {
   item: ExtractedMenuItem;
+  coin: string;
   primaryColor: string;
   secondaryColor: string;
   boldItems: boolean;
@@ -119,7 +115,7 @@ function MenuItemRow({
         )}
         style={{ color: primaryColor }}
       >
-        {formatPrice(item.price)}
+        {formatCurrencyAmount(item.price, coin)}
       </p>
     </li>
   );
@@ -129,12 +125,14 @@ function CategoryItems({
   category,
   columns,
   boldItems,
+  coin,
   primaryColor,
   secondaryColor,
 }: {
   category: ExtractedCategory;
   columns: 1 | 2;
   boldItems: boolean;
+  coin: string;
   primaryColor: string;
   secondaryColor: string;
 }) {
@@ -155,6 +153,7 @@ function CategoryItems({
         <MenuItemRow
           key={item.id ?? `${category.name}-${item.name}`}
           item={item}
+          coin={coin}
           primaryColor={primaryColor}
           secondaryColor={secondaryColor}
           boldItems={boldItems}
@@ -173,7 +172,7 @@ export default function MenuBlockView({
 }: MenuBlockProps) {
   const isPreview = categories === undefined;
   const menuCategories = isPreview ? SAMPLE_CATEGORIES : categories;
-  const { layout, columns, boldItems } = resolveMenuBlockDisplay(block);
+  const { layout, columns, boldItems, coin } = resolveMenuBlockDisplay(block);
   const [activeCategory, setActiveCategory] = useState(
     () => menuCategories[0]?.id ?? menuCategories[0]?.name ?? "",
   );
@@ -217,8 +216,7 @@ export default function MenuBlockView({
           >
             {menuCategories.map((category) => {
               const key = category.id ?? category.name;
-              const selected =
-                (active?.id ?? active?.name) === key;
+              const selected = (active?.id ?? active?.name) === key;
 
               return (
                 <button
@@ -255,6 +253,7 @@ export default function MenuBlockView({
                 category={active}
                 columns={columns}
                 boldItems={boldItems}
+                coin={coin}
                 primaryColor={primaryColor}
                 secondaryColor={secondaryColor}
               />
@@ -285,6 +284,7 @@ export default function MenuBlockView({
               category={category}
               columns={columns}
               boldItems={boldItems}
+              coin={coin}
               primaryColor={primaryColor}
               secondaryColor={secondaryColor}
             />
