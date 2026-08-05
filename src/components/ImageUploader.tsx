@@ -4,7 +4,7 @@ import uploadMenuFile from "@/app/actions/uploadMenuFile";
 import { Button } from "@/components/ui/button";
 import { DropZone, type DropZoneFile } from "@/components/ui/drop-zone";
 import { Spinner } from "@/components/ui/spinner";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useState, type FormEvent } from "react";
 import { toast } from "sonner";
 

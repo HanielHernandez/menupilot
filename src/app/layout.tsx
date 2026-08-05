@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
+import NextTopLoader from "nextjs-toploader";
 import "./globals.css";
 
 const plusJakartaSans = Plus_Jakarta_Sans({
@@ -24,6 +25,12 @@ export default function RootLayout({
       className={`${plusJakartaSans.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col" suppressHydrationWarning>
+        <NextTopLoader
+          color="#C45C26"
+          height={3}
+          showSpinner={false}
+          crawl
+        />
         {children}
         <Toaster richColors closeButton position="top-right" />
       </body>

@@ -4,7 +4,7 @@ import type { MediaRecord } from "@/app/repositories/media.repo";
 import { MediaPreviewDialog } from "@/components/MediaPreviewDialog";
 import { MediaSelectorModal } from "@/components/MediaSelectorModal";
 import { ImageIcon, PlusIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useState } from "react";
 
 type MediaGalleryProps = {

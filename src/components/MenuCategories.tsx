@@ -25,7 +25,7 @@ import {
   SaveIcon,
   Trash2Icon,
 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useState } from "react";
 import { toast } from "sonner";
 

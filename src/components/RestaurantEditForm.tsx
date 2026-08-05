@@ -21,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { slugify } from "@/lib/slug";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { SaveIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter } from "nextjs-toploader/app";
 import { useState, type ReactNode } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { toast } from "sonner";
