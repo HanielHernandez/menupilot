@@ -1,5 +1,6 @@
 "use client";
 
+import { AuthLogo } from "@/components/auth-logo";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -76,7 +77,8 @@ export default function SignUpPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
+    <div className="flex min-h-screen flex-col items-center justify-center p-4">
+      <AuthLogo />
       <Card className="w-full md:max-w-md">
         <CardHeader>
           <CardTitle>Sign Up</CardTitle>
