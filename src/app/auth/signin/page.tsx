@@ -147,85 +147,102 @@ export default function SignInPage() {
         </div>
       </aside>
 
-      <div className="flex flex-col items-center justify-center bg-background p-6 sm:p-10">
-        <AuthLogo />
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-            <CardDescription>
-              Enter your email and password to sign in.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form
-              className="grid gap-4"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void handleSubmit(onSubmit)(event);
-              }}
-            >
-              <Controller
-                control={control}
-                name="email"
-                render={({ field, fieldState }) => (
-                  <Field>
-                    <FieldLabel>Email</FieldLabel>
-                    <Input type="email" required id="email" {...field} />
-                    {fieldState.error && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              <Controller
-                control={control}
-                name="password"
-                render={({ field, fieldState }) => (
-                  <Field>
-                    <div className="flex items-center justify-between gap-2">
-                      <FieldLabel>Password</FieldLabel>
-                      <Link
-                        href="/auth/forgot-password"
-                        className="text-muted-foreground text-sm underline-offset-4 hover:text-foreground hover:underline"
-                      >
-                        Forgot password?
-                      </Link>
-                    </div>
-                    <Input type="password" required id="password" {...field} />
-                    {fieldState.error && (
-                      <FieldError errors={[fieldState.error]} />
-                    )}
-                  </Field>
-                )}
-              />
-
-              {serverError ? (
-                <p className="text-sm text-red-500">{serverError}</p>
-              ) : null}
-
-              <Button
-                type="button"
-                disabled={isSubmitting}
-                onClick={() => void handleSubmit(onSubmit)()}
+      <div className="relative flex flex-col items-center justify-center overflow-hidden p-6 sm:p-10">
+        <Image
+          src="/auth-form-bg.png"
+          alt=""
+          fill
+          priority
+          quality={95}
+          sizes="(max-width: 1024px) 100vw, 45vw"
+          className="object-cover"
+        />
+        <div className="absolute inset-0 bg-background/70" />
+        <div className="relative z-10 flex w-full max-w-md flex-col items-center">
+          <AuthLogo />
+          <Card className="w-full max-w-md shadow-lg">
+            <CardHeader>
+              <CardTitle>Sign In</CardTitle>
+              <CardDescription>
+                Enter your email and password to sign in.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form
+                className="grid gap-4"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  void handleSubmit(onSubmit)(event);
+                }}
               >
-                {isSubmitting ? (
-                  <Spinner className="h-4 w-4 animate-spin" />
-                ) : (
-                  "Sign In"
-                )}
-              </Button>
-            </form>
-          </CardContent>
-          <CardFooter>
-            <p className="text-muted-foreground text-center text-sm">
-              Dont have an account? click here to{" "}
-              <Link href="/auth/signup" className="font-bold text-blue-500">
-                Sign Up
-              </Link>
-            </p>
-          </CardFooter>
-        </Card>
+                <Controller
+                  control={control}
+                  name="email"
+                  render={({ field, fieldState }) => (
+                    <Field>
+                      <FieldLabel>Email</FieldLabel>
+                      <Input type="email" required id="email" {...field} />
+                      {fieldState.error && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                <Controller
+                  control={control}
+                  name="password"
+                  render={({ field, fieldState }) => (
+                    <Field>
+                      <div className="flex items-center justify-between gap-2">
+                        <FieldLabel>Password</FieldLabel>
+                        <Link
+                          href="/auth/forgot-password"
+                          className="text-muted-foreground text-sm underline-offset-4 hover:text-foreground hover:underline"
+                        >
+                          Forgot password?
+                        </Link>
+                      </div>
+                      <Input
+                        type="password"
+                        required
+                        id="password"
+                        {...field}
+                      />
+                      {fieldState.error && (
+                        <FieldError errors={[fieldState.error]} />
+                      )}
+                    </Field>
+                  )}
+                />
+
+                {serverError ? (
+                  <p className="text-sm text-red-500">{serverError}</p>
+                ) : null}
+
+                <Button
+                  type="button"
+                  disabled={isSubmitting}
+                  onClick={() => void handleSubmit(onSubmit)()}
+                >
+                  {isSubmitting ? (
+                    <Spinner className="h-4 w-4 animate-spin" />
+                  ) : (
+                    "Sign In"
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+            <CardFooter>
+              <p className="text-muted-foreground text-center text-sm">
+                Dont have an account? click here to{" "}
+                <Link href="/auth/signup" className="font-bold text-blue-500">
+                  Sign Up
+                </Link>
+              </p>
+            </CardFooter>
+          </Card>
+        </div>
       </div>
     </div>
   );
