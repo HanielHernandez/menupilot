@@ -4,7 +4,7 @@ export default function DashboardLoading() {
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-4 p-6">
       <Image
-        src="/icon.png"
+        src="/logo.png"
         alt="MenuPilot"
         width={64}
         height={64}

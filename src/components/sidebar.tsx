@@ -31,6 +31,7 @@ import {
   StoreIcon,
   UtensilsIcon,
 } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useRouter } from "nextjs-toploader/app";
@@ -90,9 +91,13 @@ export default function AppSidebar({ user }: { user: User }) {
               render={<Link href="/dashboard" />}
               tooltip="MenuPilot"
             >
-              <div className="flex size-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
-                <UtensilsIcon />
-              </div>
+              <Image
+                src="/logo.png"
+                alt="MenuPilot"
+                width={32}
+                height={32}
+                className="size-8 rounded-md"
+              />
               <span className="font-semibold">MenuPilot</span>
             </SidebarMenuButton>
           </SidebarMenuItem>

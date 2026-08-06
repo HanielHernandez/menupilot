@@ -4,7 +4,7 @@ export function AuthLogo() {
   return (
     <div className="mb-6 flex flex-col items-center gap-2">
       <Image
-        src="/icon.png"
+        src="/logo.png"
         alt="MenuPilot"
         width={64}
         height={64}

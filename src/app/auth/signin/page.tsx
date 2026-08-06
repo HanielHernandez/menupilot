@@ -15,11 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Spinner } from "@/components/ui/spinner";
 import { authClient } from "@/lib/auth-client";
 import { zodResolver } from "@hookform/resolvers/zod";
-import {
-  GlobeIcon,
-  ImagesIcon,
-  SparklesIcon,
-} from "lucide-react";
+import { GlobeIcon, ImagesIcon, SparklesIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "nextjs-toploader/app";
@@ -43,8 +39,7 @@ const highlights = [
   {
     icon: ImagesIcon,
     title: "Upload your menu",
-    description:
-      "Add one or more clear images of your printed menu.",
+    description: "Add one or more clear images of your printed menu.",
   },
   {
     icon: SparklesIcon,
@@ -112,10 +107,10 @@ export default function SignInPage() {
         <div className="relative mx-auto flex w-full max-w-xl flex-col gap-10 px-10 py-16 xl:px-16">
           <div className="flex items-center gap-3">
             <Image
-              src="/icon.png"
+              src="/logo.png"
               alt="MenuPilot"
-              width={48}
-              height={48}
+              width={64}
+              height={64}
               className="rounded-xl"
               priority
             />
@@ -197,12 +192,7 @@ export default function SignInPage() {
                         Forgot password?
                       </Link>
                     </div>
-                    <Input
-                      type="password"
-                      required
-                      id="password"
-                      {...field}
-                    />
+                    <Input type="password" required id="password" {...field} />
                     {fieldState.error && (
                       <FieldError errors={[fieldState.error]} />
                     )}

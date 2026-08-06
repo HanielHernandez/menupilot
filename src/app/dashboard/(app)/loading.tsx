@@ -4,7 +4,7 @@ export default function DashboardAppLoading() {
   return (
     <div className="flex min-h-64 flex-1 flex-col items-center justify-center gap-4 py-16">
       <Image
-        src="/icon.png"
+        src="/logo.png"
         alt="MenuPilot"
         width={64}
         height={64}
