@@ -1,5 +1,30 @@
 import mongoose, { InferSchemaType, Schema } from "mongoose";
 
+const ScheduleEntrySchema = new Schema(
+  {
+    day: {
+      type: String,
+      required: true,
+      trim: true,
+    },
+    openTime: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    closeTime: {
+      type: String,
+      default: "",
+      trim: true,
+    },
+    isClosed: {
+      type: Boolean,
+      default: false,
+    },
+  },
+  { _id: false },
+);
+
 const RestaurantSchema = new Schema(
   {
     name: {
@@ -52,6 +77,11 @@ const RestaurantSchema = new Schema(
       default: "",
     },
 
+    schedule: {
+      type: [ScheduleEntrySchema],
+      default: [],
+    },
+
     socials: {
       facebook: {
         type: String,
@@ -102,5 +132,7 @@ const RestaurantSchema = new Schema(
 
 export type Restaurant = InferSchemaType<typeof RestaurantSchema>;
 
-export const RestaurantModel =
-  mongoose.models.Restaurant || mongoose.model("Restaurant", RestaurantSchema);
+// Drop cached model so schema changes (e.g. schedule) apply under HMR.
+delete mongoose.models.Restaurant;
+
+export const RestaurantModel = mongoose.model("Restaurant", RestaurantSchema);

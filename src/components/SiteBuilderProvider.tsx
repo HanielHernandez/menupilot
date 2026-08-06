@@ -81,6 +81,13 @@ export type SiteBuilderValues = {
   blocks: SiteBlock[];
 };
 
+export type SiteBuilderScheduleEntry = {
+  day: string;
+  openTime: string;
+  closeTime: string;
+  isClosed: boolean;
+};
+
 export type SiteBuilderRestaurant = {
   id: string;
   name: string;
@@ -92,6 +99,7 @@ export type SiteBuilderRestaurant = {
   email: string;
   phoneNumber: string;
   whatsappNumber: string;
+  schedule: SiteBuilderScheduleEntry[];
   socials: {
     facebook: string;
     instagram: string;

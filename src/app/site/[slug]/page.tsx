@@ -7,6 +7,7 @@ import {
 import SiteTemplateRenderer from "@/components/blocks/SiteTemplateRenderer";
 import type { SiteBuilderRestaurant } from "@/components/SiteBuilderProvider";
 import { connectDB } from "@/lib/db";
+import { mapRestaurantSchedule } from "@/lib/restaurant-schedule";
 import { normalizeSiteSettings, type SiteBlock } from "@/lib/site-template";
 import { MediaModel } from "@/models/media.model";
 import type { Metadata } from "next";
@@ -48,6 +49,7 @@ async function getPublicSiteData(slug: string) {
     email: restaurant.email ?? "",
     phoneNumber: restaurant.phoneNumber ?? "",
     whatsappNumber: restaurant.whatsappNumber ?? "",
+    schedule: mapRestaurantSchedule(restaurant.schedule),
     socials: {
       facebook: restaurant.socials?.facebook ?? "",
       instagram: restaurant.socials?.instagram ?? "",

@@ -18,12 +18,21 @@ import { Separator } from "@/components/ui/separator";
 import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  isValidTimeHHmm,
+  normalizeTimeHHmm,
+} from "@/lib/restaurant-schedule";
 import { slugify } from "@/lib/slug";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { SaveIcon } from "lucide-react";
+import { PlusIcon, SaveIcon, Trash2Icon } from "lucide-react";
 import { useRouter } from "nextjs-toploader/app";
 import { useState, type ReactNode } from "react";
-import { Controller, useForm, useWatch } from "react-hook-form";
+import {
+  Controller,
+  useFieldArray,
+  useForm,
+  useWatch,
+} from "react-hook-form";
 import { toast } from "sonner";
 import * as z from "zod";
 
@@ -41,6 +50,31 @@ const optionalMediaId = z
   .optional()
   .refine((value) => !value || /^[a-f\d]{24}$/i.test(value), {
     message: "Enter a valid media id",
+  });
+
+const scheduleEntrySchema = z
+  .object({
+    day: z.string().trim().min(1, { message: "Day is required" }),
+    openTime: z.string().trim().optional(),
+    closeTime: z.string().trim().optional(),
+    isClosed: z.boolean().optional(),
+  })
+  .superRefine((entry, ctx) => {
+    if (entry.isClosed) return;
+    if (!isValidTimeHHmm(entry.openTime)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["openTime"],
+        message: "Open time is required",
+      });
+    }
+    if (!isValidTimeHHmm(entry.closeTime)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["closeTime"],
+        message: "Close time is required",
+      });
+    }
   });
 
 const restaurantSchema = z.object({
@@ -64,6 +98,7 @@ const restaurantSchema = z.object({
     }),
   phoneNumber: z.string().optional(),
   whatsappNumber: z.string().optional(),
+  schedule: z.array(scheduleEntrySchema),
   socials: z.object({
     instagram: optionalUrl,
     tiktok: optionalUrl,
@@ -86,6 +121,12 @@ export type RestaurantEditFormValues = {
   email: string;
   phoneNumber: string;
   whatsappNumber: string;
+  schedule: Array<{
+    day: string;
+    openTime: string;
+    closeTime: string;
+    isClosed: boolean;
+  }>;
   socials: {
     instagram: string;
     tiktok: string;
@@ -172,31 +213,56 @@ export default function RestaurantEditForm({
     formState: { isSubmitting },
   } = useForm<RestaurantFormSchema>({
     resolver: zodResolver(restaurantSchema),
-    defaultValues: initialValues,
+    defaultValues: {
+      ...initialValues,
+      schedule: initialValues.schedule ?? [],
+    },
+  });
+
+  const { fields, append, remove } = useFieldArray({
+    control,
+    name: "schedule",
   });
 
   const phoneNumber = useWatch({ control, name: "phoneNumber" });
   const logoMediaId = useWatch({ control, name: "logoMediaId" });
   const restaurantName = useWatch({ control, name: "name" }) ?? "Restaurant";
+  const scheduleValues = useWatch({ control, name: "schedule" }) ?? [];
 
   const logoPreview =
     logoUrl.trim() ||
     `https://ui-avatars.com/api/?name=${encodeURIComponent(restaurantName)}&size=256&background=random`;
 
-  const onSubmit = handleSubmit(async (values) => {
-    const result = await updateRestaurantAction({
-      ...values,
-      whatsappNumber: sameAsPhone ? values.phoneNumber : values.whatsappNumber,
-    });
+  const onSubmit = handleSubmit(
+    async (values) => {
+      const result = await updateRestaurantAction({
+        ...values,
+        whatsappNumber: sameAsPhone
+          ? values.phoneNumber
+          : values.whatsappNumber,
+        schedule: (values.schedule ?? []).map((entry) => {
+          const isClosed = Boolean(entry.isClosed);
+          return {
+            day: entry.day.trim(),
+            isClosed,
+            openTime: isClosed ? "" : normalizeTimeHHmm(entry.openTime),
+            closeTime: isClosed ? "" : normalizeTimeHHmm(entry.closeTime),
+          };
+        }),
+      });
 
-    if (!result.success) {
-      toast.error(result.error);
-      return;
-    }
+      if (!result.success) {
+        toast.error(result.error);
+        return;
+      }
 
-    toast.success("Restaurant updated");
-    router.refresh();
-  });
+      toast.success("Restaurant updated");
+      router.refresh();
+    },
+    () => {
+      toast.error("Please fix the highlighted fields before saving.");
+    },
+  );
 
   return (
     <form onSubmit={onSubmit}>
@@ -387,6 +453,142 @@ export default function RestaurantEditForm({
                 </Field>
               )}
             />
+          </FormSection>
+
+          <Separator />
+
+          <FormSection
+            title="Hours"
+            description="Opening hours shown on your public location section. Use day ranges like Mon - Fri."
+          >
+            {fields.length === 0 ? (
+              <p className="text-muted-foreground text-sm">
+                No hours yet. Add rows for weekdays, weekends, or closed days.
+              </p>
+            ) : (
+              <ul className="flex flex-col gap-3">
+                {fields.map((field, index) => {
+                  const isClosed = Boolean(scheduleValues[index]?.isClosed);
+                  return (
+                    <li
+                      key={field.id}
+                      className="flex flex-col gap-3 rounded-lg border p-3"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <Controller
+                          control={control}
+                          name={`schedule.${index}.day`}
+                          render={({ field: dayField, fieldState }) => (
+                            <Field className="min-w-0 flex-1">
+                              <FieldLabel>Day</FieldLabel>
+                              <Input
+                                {...dayField}
+                                value={dayField.value ?? ""}
+                                placeholder="Mon - Fri"
+                              />
+                              {fieldState.error ? (
+                                <FieldError>
+                                  {fieldState.error.message}
+                                </FieldError>
+                              ) : null}
+                            </Field>
+                          )}
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon-sm"
+                          className="mt-6"
+                          aria-label={`Remove schedule row ${index + 1}`}
+                          onClick={() => remove(index)}
+                        >
+                          <Trash2Icon className="size-4" />
+                        </Button>
+                      </div>
+
+                      <Controller
+                        control={control}
+                        name={`schedule.${index}.isClosed`}
+                        render={({ field: closedField }) => (
+                          <div className="flex items-center gap-2">
+                            <Switch
+                              checked={Boolean(closedField.value)}
+                              onCheckedChange={(checked) => {
+                                closedField.onChange(checked);
+                                if (checked) {
+                                  setValue(`schedule.${index}.openTime`, "");
+                                  setValue(`schedule.${index}.closeTime`, "");
+                                }
+                              }}
+                            />
+                            <Label>Closed</Label>
+                          </div>
+                        )}
+                      />
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <Controller
+                          control={control}
+                          name={`schedule.${index}.openTime`}
+                          render={({ field: openField, fieldState }) => (
+                            <Field>
+                              <FieldLabel>Open</FieldLabel>
+                              <Input
+                                type="time"
+                                {...openField}
+                                value={openField.value ?? ""}
+                                disabled={isClosed}
+                              />
+                              {fieldState.error ? (
+                                <FieldError>
+                                  {fieldState.error.message}
+                                </FieldError>
+                              ) : null}
+                            </Field>
+                          )}
+                        />
+                        <Controller
+                          control={control}
+                          name={`schedule.${index}.closeTime`}
+                          render={({ field: closeField, fieldState }) => (
+                            <Field>
+                              <FieldLabel>Close</FieldLabel>
+                              <Input
+                                type="time"
+                                {...closeField}
+                                value={closeField.value ?? ""}
+                                disabled={isClosed}
+                              />
+                              {fieldState.error ? (
+                                <FieldError>
+                                  {fieldState.error.message}
+                                </FieldError>
+                              ) : null}
+                            </Field>
+                          )}
+                        />
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() =>
+                append({
+                  day: "",
+                  openTime: "09:00",
+                  closeTime: "17:00",
+                  isClosed: false,
+                })
+              }
+            >
+              <PlusIcon className="size-4" />
+              Add hours
+            </Button>
           </FormSection>
 
           <Separator />

@@ -1,6 +1,7 @@
 import RestaurantEditForm from "@/components/RestaurantEditForm";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { mapRestaurantSchedule } from "@/lib/restaurant-schedule";
 import { MediaModel } from "@/models/media.model";
 import { RestaurantModel } from "@/models/restaurant.model";
 import { headers } from "next/headers";
@@ -54,6 +55,7 @@ export default async function RestaurantPage() {
           email: restaurant.email ?? "",
           phoneNumber: restaurant.phoneNumber ?? "",
           whatsappNumber: restaurant.whatsappNumber ?? "",
+          schedule: mapRestaurantSchedule(restaurant.schedule),
           socials: {
             instagram: restaurant.socials?.instagram ?? "",
             tiktok: restaurant.socials?.tiktok ?? "",

@@ -1,4 +1,5 @@
 import { connectDB } from "@/lib/db";
+import { normalizeTimeHHmm } from "@/lib/restaurant-schedule";
 import { slugify } from "@/lib/slug";
 import {
   RestaurantModel,
@@ -6,6 +7,26 @@ import {
 } from "@/models/restaurant.model";
 
 export { slugify };
+
+export type ScheduleEntryInput = {
+  day: string;
+  openTime?: string;
+  closeTime?: string;
+  isClosed?: boolean;
+};
+
+function normalizeSchedule(schedule?: ScheduleEntryInput[]) {
+  if (!schedule?.length) return [];
+  return schedule.map((entry) => {
+    const isClosed = Boolean(entry.isClosed);
+    return {
+      day: entry.day.trim(),
+      openTime: isClosed ? "" : normalizeTimeHHmm(entry.openTime),
+      closeTime: isClosed ? "" : normalizeTimeHHmm(entry.closeTime),
+      isClosed,
+    };
+  });
+}
 
 export type CreateRestaurantInput = {
   name: string;
@@ -16,6 +37,7 @@ export type CreateRestaurantInput = {
   email?: string;
   phoneNumber?: string;
   whatsappNumber?: string;
+  schedule?: ScheduleEntryInput[];
   socials?: {
     facebook?: string;
     instagram?: string;
@@ -48,6 +70,7 @@ export async function createRestaurant(input: CreateRestaurantInput) {
     email: input.email ?? "",
     phoneNumber: input.phoneNumber ?? "",
     whatsappNumber: input.whatsappNumber ?? "",
+    schedule: normalizeSchedule(input.schedule),
     socials: {
       facebook: input.socials?.facebook ?? "",
       instagram: input.socials?.instagram ?? "",
@@ -71,6 +94,7 @@ export type UpdateRestaurantInput = {
   email?: string;
   phoneNumber?: string;
   whatsappNumber?: string;
+  schedule?: ScheduleEntryInput[];
   socials?: {
     facebook?: string;
     instagram?: string;
@@ -99,6 +123,7 @@ export async function updateRestaurantByOwnerId(
         email: input.email?.trim().toLowerCase() ?? "",
         phoneNumber: input.phoneNumber?.trim() ?? "",
         whatsappNumber: input.whatsappNumber?.trim() ?? "",
+        schedule: normalizeSchedule(input.schedule),
         socials: {
           facebook: input.socials?.facebook?.trim() ?? "",
           instagram: input.socials?.instagram?.trim() ?? "",

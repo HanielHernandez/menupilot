@@ -2,6 +2,7 @@ import { getOrCreateSiteDraftForRestaurant } from "@/app/repositories/site.repo"
 import SiteBuilder from "@/components/SiteBuilder";
 import { auth } from "@/lib/auth";
 import { connectDB } from "@/lib/db";
+import { mapRestaurantSchedule } from "@/lib/restaurant-schedule";
 import { MediaModel } from "@/models/media.model";
 import { RestaurantModel } from "@/models/restaurant.model";
 import { headers } from "next/headers";
@@ -52,6 +53,7 @@ export default async function SitePage() {
           email: restaurant.email ?? "",
           phoneNumber: restaurant.phoneNumber ?? "",
           whatsappNumber: restaurant.whatsappNumber ?? "",
+          schedule: mapRestaurantSchedule(restaurant.schedule),
           socials: {
             facebook: restaurant.socials?.facebook ?? "",
             instagram: restaurant.socials?.instagram ?? "",

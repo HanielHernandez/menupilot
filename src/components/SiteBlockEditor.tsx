@@ -194,7 +194,7 @@ export default function SiteBlockEditor({ className }: SiteBlockEditorProps) {
                     }
                     render={({ field }) => (
                       <Field>
-                        <FieldLabel>CTA label</FieldLabel>
+                        <FieldLabel>Button label</FieldLabel>
                         <Input
                           value={String(field.value ?? "")}
                           onChange={field.onChange}

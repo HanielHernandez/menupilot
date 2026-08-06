@@ -1,4 +1,5 @@
 import type { SiteBuilderRestaurant } from "@/components/SiteBuilderProvider";
+import { formatScheduleRow } from "@/lib/restaurant-schedule";
 import type { LocationBlock } from "@/lib/site-template";
 
 type LocationBlockProps = {
@@ -16,6 +17,8 @@ export default function LocationBlockView({
   foregroundColor,
   secondaryColor,
 }: LocationBlockProps) {
+  const schedule = restaurant.schedule ?? [];
+
   return (
     <section
       id="location"
@@ -44,6 +47,26 @@ export default function LocationBlockView({
         )}
         {restaurant.phoneNumber ? (
           <p className="mt-2 opacity-85">{restaurant.phoneNumber}</p>
+        ) : null}
+
+        {schedule.length > 0 ? (
+          <ul className="mt-4 flex flex-col gap-1.5 border-t pt-3 opacity-85" style={{ borderColor: `${secondaryColor}66` }}>
+            {schedule.map((entry, index) => {
+              const label = formatScheduleRow(entry);
+              const [day, hours] = label.split("\t");
+              return (
+                <li
+                  key={`${entry.day}-${index}`}
+                  className="grid grid-cols-[minmax(0,1fr)_auto] gap-4"
+                >
+                  <span>{day}</span>
+                  <span className="text-right whitespace-nowrap">
+                    {hours ?? ""}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         ) : null}
       </div>
     </section>

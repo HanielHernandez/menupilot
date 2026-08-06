@@ -8,6 +8,10 @@ import {
   updateRestaurantByOwnerId,
 } from "@/app/repositories/restaurant.repo";
 import { auth } from "@/lib/auth";
+import {
+  isValidTimeHHmm,
+  normalizeTimeHHmm,
+} from "@/lib/restaurant-schedule";
 import { slugify } from "@/lib/slug";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
@@ -27,6 +31,40 @@ const optionalMediaId = z
   .optional()
   .refine((value) => !value || /^[a-f\d]{24}$/i.test(value), {
     message: "Enter a valid media id",
+  });
+
+const scheduleEntrySchema = z
+  .object({
+    day: z.string().trim().min(1, { message: "Day is required" }),
+    openTime: z.string().trim().optional(),
+    closeTime: z.string().trim().optional(),
+    isClosed: z.boolean().optional(),
+  })
+  .transform((entry) => {
+    const isClosed = Boolean(entry.isClosed);
+    return {
+      day: entry.day.trim(),
+      isClosed,
+      openTime: isClosed ? "" : normalizeTimeHHmm(entry.openTime),
+      closeTime: isClosed ? "" : normalizeTimeHHmm(entry.closeTime),
+    };
+  })
+  .superRefine((entry, ctx) => {
+    if (entry.isClosed) return;
+    if (!isValidTimeHHmm(entry.openTime)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["openTime"],
+        message: "Open time is required",
+      });
+    }
+    if (!isValidTimeHHmm(entry.closeTime)) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["closeTime"],
+        message: "Close time is required",
+      });
+    }
   });
 
 const restaurantFormSchema = z.object({
@@ -50,6 +88,7 @@ const restaurantFormSchema = z.object({
     }),
   phoneNumber: z.string().trim().optional(),
   whatsappNumber: z.string().trim().optional(),
+  schedule: z.array(scheduleEntrySchema).optional().default([]),
   socials: z.object({
     instagram: optionalUrl,
     tiktok: optionalUrl,

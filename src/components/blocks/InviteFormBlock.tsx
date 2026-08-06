@@ -2,7 +2,7 @@
 
 import { submitTableRequestAction } from "@/app/actions/table-request";
 import type { InviteFormBlock } from "@/lib/site-template";
-import { useState, useTransition } from "react";
+import { useState, useTransition, type CSSProperties } from "react";
 
 type InviteFormBlockProps = {
   block: InviteFormBlock;
@@ -26,6 +26,9 @@ export default function InviteFormBlockView({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  const fieldClassName =
+    "rounded-[var(--site-radius)] border bg-transparent px-3 text-sm outline-none transition-colors disabled:opacity-60 border-[color:var(--invite-border)] hover:border-[color:var(--invite-border-active)] focus:border-[color:var(--invite-border-active)] focus-visible:border-[color:var(--invite-border-active)]";
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -77,15 +80,23 @@ export default function InviteFormBlockView({
         <h2 className="text-2xl font-bold tracking-tight">{block.title}</h2>
         <p className="text-sm opacity-85">{block.description}</p>
       </div>
-      <form className="grid gap-3" onSubmit={onSubmit}>
+      <form
+        className="grid gap-3"
+        onSubmit={onSubmit}
+        style={
+          {
+            ["--invite-border"]: `${secondaryColor}aa`,
+            ["--invite-border-active"]: secondaryColor,
+          } as CSSProperties
+        }
+      >
         <input
           type="text"
           name="name"
           required
           placeholder="Your name"
           disabled={isPending}
-          className="h-9 rounded-[var(--site-radius)] border bg-transparent px-3 text-sm outline-none disabled:opacity-60"
-          style={{ borderColor: `${secondaryColor}aa` }}
+          className={`h-9 ${fieldClassName}`}
         />
         <input
           type="email"
@@ -93,8 +104,7 @@ export default function InviteFormBlockView({
           required
           placeholder="Email"
           disabled={isPending}
-          className="h-9 rounded-[var(--site-radius)] border bg-transparent px-3 text-sm outline-none disabled:opacity-60"
-          style={{ borderColor: `${secondaryColor}aa` }}
+          className={`h-9 ${fieldClassName}`}
         />
         <textarea
           name="message"
@@ -102,8 +112,7 @@ export default function InviteFormBlockView({
           placeholder="Date, time, party size"
           rows={3}
           disabled={isPending}
-          className="rounded-[var(--site-radius)] border bg-transparent px-3 py-2 text-sm outline-none disabled:opacity-60"
-          style={{ borderColor: `${secondaryColor}aa` }}
+          className={`py-2 ${fieldClassName}`}
         />
         {error ? (
           <p className="text-sm" style={{ color: "#c0392b" }}>
