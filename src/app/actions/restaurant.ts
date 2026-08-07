@@ -99,8 +99,8 @@ const restaurantFormSchema = z.object({
   }),
 });
 
-export type CreateRestaurantFormInput = z.infer<typeof restaurantFormSchema>;
-export type UpdateRestaurantFormInput = z.infer<typeof restaurantFormSchema>;
+export type CreateRestaurantFormInput = z.input<typeof restaurantFormSchema>;
+export type UpdateRestaurantFormInput = z.input<typeof restaurantFormSchema>;
 
 export type CreateRestaurantResult =
   | { success: true; slug: string }
