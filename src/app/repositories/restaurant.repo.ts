@@ -1,10 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { normalizeTimeHHmm } from "@/lib/restaurant-schedule";
 import { slugify } from "@/lib/slug";
-import {
-  RestaurantModel,
-  type Restaurant,
-} from "@/models/restaurant.model";
+import { RestaurantModel } from "@/models/restaurant.model";
 
 export { slugify };
 
@@ -82,7 +79,7 @@ export async function createRestaurant(input: CreateRestaurantInput) {
     ownerId: input.ownerId,
   });
 
-  return restaurant.toObject() as Restaurant & { _id: string };
+  return restaurant.toObject();
 }
 
 export type UpdateRestaurantInput = {
